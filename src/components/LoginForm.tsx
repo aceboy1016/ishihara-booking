@@ -10,14 +10,27 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Initial password as specified
-    if (password === 'ishihara2025') {
-      setError('');
-      onLoginSuccess();
-    } else {
-      setError('パスワードが正しくありません。');
+    setError('');
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+      
+      if (response.ok) {
+        onLoginSuccess();
+      } else {
+        const data = await response.json();
+        setError(data.message || 'パスワードが間違っています');
+      }
+    } catch (error) {
+      setError('認証中にエラーが発生しました');
     }
   };
 
