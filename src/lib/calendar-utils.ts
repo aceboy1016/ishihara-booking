@@ -19,18 +19,32 @@ const getCalendarClient = () => {
   
   let credentialsString = process.env.GOOGLE_CREDENTIALS_JSON;
   
+  console.log('DEBUG: Raw credentials length:', credentialsString.length);
+  console.log('DEBUG: First 50 chars:', credentialsString.substring(0, 50));
+  
   // Check if the credentials are base64 encoded
   try {
     const decoded = Buffer.from(credentialsString, 'base64').toString('utf-8');
+    console.log('DEBUG: Decoded length:', decoded.length);
+    console.log('DEBUG: Decoded first 50 chars:', decoded.substring(0, 50));
     // If it decodes successfully and looks like JSON, use the decoded version
     if (decoded.startsWith('{') && decoded.endsWith('}')) {
       credentialsString = decoded;
+      console.log('DEBUG: Using decoded credentials');
     }
   } catch (error) {
-    // If decoding fails, use the original string
+    console.log('DEBUG: Base64 decode failed, using original');
   }
   
-  const credentials = JSON.parse(credentialsString);
+  let credentials;
+  try {
+    credentials = JSON.parse(credentialsString);
+    console.log('DEBUG: JSON parse successful, project_id:', credentials.project_id);
+  } catch (parseError) {
+    console.error('DEBUG: JSON parse error at position:', parseError.message);
+    console.error('DEBUG: String around error position:', credentialsString.substring(70, 90));
+    throw parseError;
+  }
 
   const auth = new google.auth.GoogleAuth({
     credentials,
