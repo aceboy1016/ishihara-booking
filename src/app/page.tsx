@@ -1,103 +1,219 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import LoginForm from '../components/LoginForm';
+import BookingCalendar from '../components/BookingCalendar';
+import StoreFilter from '../components/StoreFilter';
+import Spinner from '../components/Spinner';
+import { BookingData } from '../types/booking';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<'ebisu' | 'hanzoomon'>('ebisu');
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [apiStatus, setApiStatus] = useState<'success' | 'error' | 'loading'>('loading');
+  const [apiErrorLog, setApiErrorLog] = useState<string[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    const sessionAuth = sessionStorage.getItem('isAuthenticated');
+    const adminAuth = sessionStorage.getItem('isAdminAuthenticated');
+    if (sessionAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+    if (adminAuth === 'true') {
+      setIsAdminAuthenticated(true);
+    }
+    setLoading(false);
+  }, []);
+
+  const fetchBookingData = async () => {
+    try {
+      setApiStatus('loading');
+      const res = await fetch('/api/bookings');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Failed to fetch booking data`);
+      }
+      const data = await res.json();
+      setBookingData(data);
+      setApiStatus('success');
+      setLastRefreshTime(new Date());
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      setApiStatus('error');
+      setApiErrorLog(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${errorMessage}`]);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchBookingData();
+    }
+  }, [isAuthenticated]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchBookingData();
+    setIsRefreshing(false);
+  };
+
+  const handleLoginSuccess = () => {
+    sessionStorage.setItem('isAuthenticated', 'true');
+    setIsAuthenticated(true);
+  };
+
+  const handleAdminToggle = () => {
+    if (!isAdminAuthenticated) {
+      const password = prompt('管理者パスワードを入力してください:');
+      if (password === '1234') {
+        sessionStorage.setItem('isAdminAuthenticated', 'true');
+        setIsAdminAuthenticated(true);
+        setIsAdminMode(true);
+      } else if (password !== null) {
+        alert('パスワードが間違っています');
+      }
+    } else {
+      setIsAdminMode(!isAdminMode);
+    }
+  };
+
+
+  if (loading) {
+    return <Spinner />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return (
+    <main className="container mx-auto px-4 py-8">
+      <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-0">
+          石原トレーナー 予約早見表
+        </h1>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <button
+            onClick={handleAdminToggle}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              isAdminMode 
+                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {isAdminMode ? '管理者モード' : '閲覧者モード'}
+          </button>
+          <StoreFilter selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+      
+      {error && <p className="text-red-500 bg-red-100 p-4 rounded-md">Error: {error}</p>}
+
+      {/* 管理者データ管理パネル */}
+      {isAdminMode && (
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h2 className="text-lg font-semibold mb-4 text-blue-800">データ管理パネル</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* APIステータス */}
+            <div className="bg-white p-3 rounded border">
+              <div className="text-sm text-gray-600 mb-1">API状況</div>
+              <div className={`flex items-center gap-2 ${
+                apiStatus === 'success' ? 'text-green-600' :
+                apiStatus === 'error' ? 'text-red-600' : 'text-yellow-600'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  apiStatus === 'success' ? 'bg-green-500' :
+                  apiStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="font-medium">
+                  {apiStatus === 'success' ? '正常' :
+                   apiStatus === 'error' ? 'エラー' : '読込中'}
+                </span>
+              </div>
+            </div>
+
+            {/* 最終更新時刻 */}
+            <div className="bg-white p-3 rounded border">
+              <div className="text-sm text-gray-600 mb-1">最終更新</div>
+              <div className="font-medium text-gray-800">
+                {lastRefreshTime ? lastRefreshTime.toLocaleTimeString('ja-JP') : 'なし'}
+              </div>
+            </div>
+
+            {/* 予約データ統計 */}
+            <div className="bg-white p-3 rounded border">
+              <div className="text-sm text-gray-600 mb-1">予約データ</div>
+              <div className="font-medium text-gray-800">
+                {bookingData ? 
+                  `石原: ${bookingData.ishihara.length}件` : 
+                  'なし'
+                }
+              </div>
+            </div>
+
+            {/* 手動更新ボタン */}
+            <div className="bg-white p-3 rounded border">
+              <button 
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className={`w-full px-3 py-2 rounded font-medium transition-colors ${
+                  isRefreshing 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isRefreshing ? '更新中...' : 'データ更新'}
+              </button>
+            </div>
+          </div>
+
+          {/* エラーログ */}
+          {apiErrorLog.length > 0 && (
+            <div className="bg-white p-3 rounded border">
+              <div className="text-sm text-gray-600 mb-2">エラーログ (最新10件)</div>
+              <div className="max-h-32 overflow-y-auto">
+                {apiErrorLog.slice(-10).reverse().map((log, index) => (
+                  <div key={index} className="text-xs text-red-600 mb-1 font-mono">
+                    {log}
+                  </div>
+                ))}
+              </div>
+              <button 
+                onClick={() => setApiErrorLog([])}
+                className="mt-2 text-xs text-blue-600 hover:underline"
+              >
+                ログをクリア
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {bookingData ? (
+        <BookingCalendar 
+          selectedStore={selectedStore} 
+          currentDate={new Date()} 
+          bookings={bookingData}
+          isAdminMode={isAdminMode}
+        />
+      ) : (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Spinner />
+          <p className="ml-4">Loading booking data...</p>
+        </div>
+      )}
+
+      <footer className="text-center text-gray-500 mt-8">
+        <p>最終更新: {bookingData ? new Date(bookingData.lastUpdate).toLocaleString('ja-JP') : 'N/A'}</p>
       </footer>
-    </div>
+    </main>
   );
 }

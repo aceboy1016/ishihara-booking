@@ -3,6 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-available: #10b981;      /* 予約可能: 緑 */
+  --color-unavailable: #ef4444;    /* 予約不可: 赤 */
+  --color-trainer-busy: #f59e0b;   /* 石原予約済み: オレンジ */
+  --color-travel-conflict: #8b5cf6; /* 移動時間制約: 紫 */
+  --color-outside-hours: #6b7280;  /* 営業時間外: グレー */
 }
 
 @theme inline {
