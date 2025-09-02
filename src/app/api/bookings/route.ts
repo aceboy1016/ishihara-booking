@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic'; // Force dynamic rendering
 
 export async function GET() {
   try {
+    console.log('DEBUG: API route started');
+    console.log('DEBUG: Environment check:', !!process.env.GOOGLE_CREDENTIALS_JSON);
+    
     const startTime = Date.now();
     const bookings = await getGoogleCalendarBookings();
     const endTime = Date.now();
@@ -26,7 +29,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         message: "Failed to fetch data from Google Calendar.", 
-        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       },
       { status: 500 }
