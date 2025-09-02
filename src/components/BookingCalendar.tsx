@@ -96,7 +96,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
       setModalOpen(true);
     } else {
       // 閲覧者モードでは複数選択機能
-      const cellId = `${dateStr}-${time}`;
       const isAlreadySelected = selectedCells.some(cell => 
         cell.date === dateStr && cell.time === time && cell.store === selectedStore
       );

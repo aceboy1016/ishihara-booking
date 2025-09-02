@@ -1,6 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Spinner from '../../components/Spinner';
+import LoginForm from '../../components/LoginForm';
+import AdminPanel from '../../components/AdminPanel';
+
+interface BookingData {
+  lastUpdate: string;
+}
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

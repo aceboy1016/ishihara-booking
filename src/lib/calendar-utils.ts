@@ -1,5 +1,6 @@
 
 import { google } from 'googleapis';
+import { calendar_v3 } from 'googleapis';
 import { Booking, BookingData } from '../types/booking';
 
 // The calendar IDs provided by the user
@@ -26,7 +27,7 @@ const getCalendarClient = () => {
 };
 
 // Function to fetch events from a single calendar
-const fetchEvents = async (calendar: any, calendarId: string, timeMin: string, timeMax: string) => {
+const fetchEvents = async (calendar: ReturnType<typeof google.calendar>, calendarId: string, timeMin: string, timeMax: string): Promise<calendar_v3.Schema$Event[]> => {
   try {
     const res = await calendar.events.list({
       calendarId,
@@ -36,8 +37,8 @@ const fetchEvents = async (calendar: any, calendarId: string, timeMin: string, t
       orderBy: 'startTime',
     });
     return res.data.items || [];
-  } catch (error: any) {
-    console.error(`Failed to fetch events for ${calendarId}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error');
     return []; // Return empty array on error
   }
 };
@@ -58,7 +59,7 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   ]);
 
   // Helper to transform Google Calendar events to our Booking type
-  const transformEvent = (event: any): Booking => {
+  const transformEvent = (event: calendar_v3.Schema$Event): Booking => {
     let start: string;
     let end: string;
 
@@ -88,7 +89,7 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
       id: event.id!,
       start,
       end,
-      title: event.summary,
+      title: event.summary || undefined,
     };
   };
 

@@ -9,12 +9,6 @@ export interface AvailabilityCheck {
 const ISHIHARA_SESSION_DURATION = 60; // minutes
 const TRAVEL_TIME = 60; // minutes
 
-// Helper to check if a specific time is within a booking's time range
-const isTimeInBooking = (slotTime: Date, booking: Booking): boolean => {
-  const bookingStart = new Date(booking.start);
-  const bookingEnd = new Date(booking.end);
-  return slotTime >= bookingStart && slotTime < bookingEnd;
-};
 
 // 1. Check if Ishihara is busy
 const isTrainerBusy = (slotTime: Date, ishiharaBookings: Booking[]): boolean => {

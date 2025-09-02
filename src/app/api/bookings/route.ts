@@ -19,14 +19,14 @@ export async function GET() {
         'Content-Type': 'application/json',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching Google Calendar bookings:", error);
-    console.error("Stack trace:", error.stack);
+    console.error("Stack trace:", error instanceof Error ? error.stack : 'Unknown error');
     
     return NextResponse.json(
       { 
         message: "Failed to fetch data from Google Calendar.", 
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : 'Internal server error',
         timestamp: new Date().toISOString()
       },
       { status: 500 }

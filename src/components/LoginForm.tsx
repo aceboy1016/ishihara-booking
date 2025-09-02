@@ -29,7 +29,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         const data = await response.json();
         setError(data.message || 'パスワードが間違っています');
       }
-    } catch (error) {
+    } catch {
       setError('認証中にエラーが発生しました');
     }
   };

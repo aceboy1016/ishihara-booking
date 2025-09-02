@@ -11,38 +11,6 @@ const getRandomInt = (min: number, max: number): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-const generateRandomBookings = (days: number, dayStartTime: number, dayEndTime: number): Booking[] => {
-  const bookings: Booking[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < days; i++) {
-    const date = new Date(now);
-    date.setDate(now.getDate() + i);
-
-    // Add a random number of bookings for the day
-    const numBookings = getRandomInt(2, 5);
-    for (let j = 0; j < numBookings; j++) {
-      const startHour = getRandomInt(dayStartTime, dayEndTime - 2);
-      const startMinute = getRandomInt(0, 1) * 30;
-      
-      const startDate = new Date(date);
-      startDate.setHours(startHour, startMinute, 0, 0);
-
-      // Booking duration: 60 or 90 minutes
-      const duration = getRandomInt(1, 2) === 1 ? 60 : 90;
-      const endDate = addMinutes(startDate, duration);
-
-      if (endDate.getHours() >= dayEndTime && endDate.getMinutes() > 0) continue;
-
-      bookings.push({
-        id: `booking-${i}-${j}-${Math.random()}`,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-      });
-    }
-  }
-  return bookings;
-};
 
 const generateIshiharaBookings = (days: number, dayStartTime: number, dayEndTime: number): Booking[] => {
   const bookings: Booking[] = [];
