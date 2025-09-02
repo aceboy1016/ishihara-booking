@@ -16,7 +16,21 @@ const getCalendarClient = () => {
   if (!process.env.GOOGLE_CREDENTIALS_JSON) {
     throw new Error('GOOGLE_CREDENTIALS_JSON environment variable is not set.');
   }
-  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+  
+  let credentialsString = process.env.GOOGLE_CREDENTIALS_JSON;
+  
+  // Check if the credentials are base64 encoded
+  try {
+    const decoded = Buffer.from(credentialsString, 'base64').toString('utf-8');
+    // If it decodes successfully and looks like JSON, use the decoded version
+    if (decoded.startsWith('{') && decoded.endsWith('}')) {
+      credentialsString = decoded;
+    }
+  } catch (error) {
+    // If decoding fails, use the original string
+  }
+  
+  const credentials = JSON.parse(credentialsString);
 
   const auth = new google.auth.GoogleAuth({
     credentials,
