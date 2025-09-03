@@ -183,14 +183,10 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
       b.store = 'hanzoomon';
   });
 
-  // Add a 3-hour booking deadline
-  const bookingLimit = new Date(new Date().getTime() + 3 * 60 * 60 * 1000);
-  const filterByBookingLimit = (booking: Booking) => new Date(booking.start) > bookingLimit;
-
   return {
-    ishihara: ishiharaBookings.filter(filterByBookingLimit),
-    ebisu: ebisuBookings.filter(filterByBookingLimit),
-    hanzoomon: hanzomonBookings.filter(filterByBookingLimit),
+    ishihara: ishiharaBookings,
+    ebisu: ebisuBookings,
+    hanzoomon: hanzomonBookings,
     lastUpdate: new Date().toISOString(),
   };
 };

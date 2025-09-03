@@ -104,6 +104,13 @@ export const checkAvailability = (
   store: 'ebisu' | 'hanzoomon',
   allBookings: BookingData
 ): AvailabilityCheck => {
+  // Check for the 3-hour booking deadline
+  const now = new Date();
+  const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  if (slotTime <= threeHoursFromNow) {
+    return { isAvailable: false, reason: 'unavailable_block' };
+  }
+
   // Check if outside business hours (9:00 - 21:30, last booking starts at 21:00)
   const hour = slotTime.getHours();
   const minute = slotTime.getMinutes();
