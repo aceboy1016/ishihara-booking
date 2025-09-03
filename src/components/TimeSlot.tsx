@@ -85,11 +85,13 @@ const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore
 
   return (
     <div 
-      className={`border-b border-r h-12 transition-colors duration-200 ${status.className} ${
-        (isAdminMode || result.isAvailable) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+      className={`h-12 transition-colors duration-200 ${
+        isSelected 
+          ? 'bg-blue-600 border-4 border-blue-800' 
+          : `${status.className} border-b border-r`
       } ${
-        isSelected ? 'ring-4 ring-blue-600 relative z-10 shadow-lg' : ''
-      } flex items-center justify-center`} 
+        (isAdminMode || result.isAvailable) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+      } flex items-center justify-center relative z-10`} 
       title={status.title}
       onClick={onClick}
     >
