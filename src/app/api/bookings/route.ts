@@ -26,10 +26,18 @@ export async function GET() {
     console.error("Error fetching Google Calendar bookings:", error);
     console.error("Stack trace:", error instanceof Error ? error.stack : 'Unknown error');
     
+    // Add debug info to error response
+    const debugInfo = {
+      hasEnvVar: !!process.env.GOOGLE_CREDENTIALS_JSON,
+      envVarLength: process.env.GOOGLE_CREDENTIALS_JSON?.length || 0,
+      envVarPrefix: process.env.GOOGLE_CREDENTIALS_JSON?.substring(0, 20) || 'N/A'
+    };
+    
     return NextResponse.json(
       { 
         message: "Failed to fetch data from Google Calendar.", 
         error: error instanceof Error ? error.message : 'Unknown error',
+        debug: debugInfo,
         timestamp: new Date().toISOString()
       },
       { status: 500 }
