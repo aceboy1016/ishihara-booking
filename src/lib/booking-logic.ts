@@ -167,8 +167,8 @@ export const checkAvailability = (
   const isHol = isHoliday(slotTime);
   
   if (isWeekend || isHol) {
-    // Weekend/holiday: 9:00 - 20:00 (last booking starts at 20:00)
-    if (hour > 20) {
+    // Weekend/holiday: 9:00 - 20:00 (last booking starts at 19:00)
+    if (hour > 19 || (hour === 19 && minute > 0)) {
       return { isAvailable: false, reason: 'outside_hours' };
     }
   } else {
