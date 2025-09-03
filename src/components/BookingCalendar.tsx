@@ -20,29 +20,28 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   const [selectedCells, setSelectedCells] = useState<Array<{ date: string; time: string; store: 'ebisu' | 'hanzoomon' }>>([]);
   const [displayDate, setDisplayDate] = useState(currentDate);
 
-  // 現在日から2ヶ月先までの日数を計算
+  // 現在日から2ヶ月先までの期間設定
   const today = new Date();
   const twoMonthsLater = new Date(today);
   twoMonthsLater.setMonth(twoMonthsLater.getMonth() + 2);
   
-  // 表示開始日は今日か、displayDateのどちらか遅い方
-  const startDate = new Date(Math.max(today.getTime(), displayDate.getTime()));
+  // displayDateの月の1日から末日まで表示
+  const startOfMonth = new Date(displayDate.getFullYear(), displayDate.getMonth(), 1);
+  const endOfMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 0);
   
-  // 2ヶ月先までの日数を計算
-  const daysDiff = Math.ceil((twoMonthsLater.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  const maxDays = Math.max(0, daysDiff);
+  // その月の日数を取得
+  const daysInMonth = endOfMonth.getDate();
 
-  const days = Array.from({ length: maxDays }, (_, i) => {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-    return date;
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    return new Date(displayDate.getFullYear(), displayDate.getMonth(), i + 1);
   });
 
   const goToPreviousMonth = () => {
     const newDate = new Date(displayDate);
     newDate.setMonth(newDate.getMonth() - 1);
-    // 今日より前には戻れない
-    if (newDate >= today) {
+    // 今日が含まれる月より前には戻れない
+    const todayMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    if (newDate >= todayMonth) {
       setDisplayDate(newDate);
     }
   };
@@ -60,7 +59,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   const canGoPrevious = () => {
     const prevMonth = new Date(displayDate);
     prevMonth.setMonth(prevMonth.getMonth() - 1);
-    return prevMonth >= today;
+    const todayMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    return prevMonth >= todayMonth;
   };
 
   const canGoNext = () => {
