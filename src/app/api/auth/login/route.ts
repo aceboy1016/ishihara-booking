@@ -4,11 +4,11 @@ export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json();
     
-    // 環境変数からパスワードを取得、フォールバックを設定
-    const validPassword = process.env.LOGIN_PASSWORD || 'ishihara2025';
+    // 管理者モードのパスワード
+    const adminPassword = 'junnya1016?';
     
-    if (password === validPassword) {
-      return NextResponse.json({ success: true });
+    if (password === adminPassword) {
+      return NextResponse.json({ success: true, isAdmin: true });
     } else {
       return NextResponse.json(
         { message: 'パスワードが正しくありません' },

@@ -21,11 +21,10 @@ export default function Home() {
   const [apiErrorLog, setApiErrorLog] = useState<string[]>([]);
 
   useEffect(() => {
-    const sessionAuth = sessionStorage.getItem('isAuthenticated');
+    // 閲覧者モードは常に認証済み
+    setIsAuthenticated(true);
+    
     const adminAuth = sessionStorage.getItem('isAdminAuthenticated');
-    if (sessionAuth === 'true') {
-      setIsAuthenticated(true);
-    }
     if (adminAuth === 'true') {
       setIsAdminAuthenticated(true);
     }
@@ -69,15 +68,30 @@ export default function Home() {
     setIsAuthenticated(true);
   };
 
-  const handleAdminToggle = () => {
+  const handleAdminToggle = async () => {
     if (!isAdminAuthenticated) {
       const password = prompt('管理者パスワードを入力してください:');
-      if (password === '1234') {
-        sessionStorage.setItem('isAdminAuthenticated', 'true');
-        setIsAdminAuthenticated(true);
-        setIsAdminMode(true);
-      } else if (password !== null) {
-        alert('パスワードが間違っています');
+      if (password) {
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.isAdmin) {
+              sessionStorage.setItem('isAdminAuthenticated', 'true');
+              setIsAdminAuthenticated(true);
+              setIsAdminMode(true);
+            }
+          } else {
+            alert('パスワードが間違っています');
+          }
+        } catch (error) {
+          alert('認証中にエラーが発生しました');
+        }
       }
     } else {
       setIsAdminMode(!isAdminMode);
@@ -89,9 +103,7 @@ export default function Home() {
     return <Spinner />;
   }
 
-  if (!isAuthenticated) {
-    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
-  }
+  // 閲覧者モードは常に認証済みなので、ログインフォームは不要
 
   return (
     <main className="container mx-auto px-4 py-8">
