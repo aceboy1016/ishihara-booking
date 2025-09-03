@@ -1,3 +1,5 @@
+
+
 import { google } from 'googleapis';
 import { calendar_v3 } from 'googleapis';
 import { Booking, BookingData } from '../types/booking';
@@ -18,62 +20,28 @@ const getCalendarClient = () => {
   
   let credentialsString = process.env.GOOGLE_CREDENTIALS_JSON;
   
-  console.log('DEBUG: Raw credentials length:', credentialsString.length);
-  console.log('DEBUG: First 50 chars:', credentialsString.substring(0, 50));
-  console.log('DEBUG: Last 50 chars:', credentialsString.substring(credentialsString.length - 50));
-  
-  // Check if the credentials are base64 encoded
-  try {
-    // If the string doesn't start with {, it's likely base64 encoded
-    if (!credentialsString.startsWith('{')) {
-      console.log('DEBUG: String does not start with {, attempting base64 decode');
-      const decoded = Buffer.from(credentialsString, 'base64').toString('utf-8');
-      console.log('DEBUG: Decoded length:', decoded.length);
-      console.log('DEBUG: Decoded first 50 chars:', decoded.substring(0, 50));
-      console.log('DEBUG: Decoded last 50 chars:', decoded.substring(decoded.length - 50));
-      
-      const trimmed = decoded.trim();
-      credentialsString = trimmed.replace(/[\u0000-\u001F\u007F]/g, (match) => {
-        switch (match) {
-          case '\n': return '\\n';
-          case '\r': return '\\r';
-          case '\t': return '\\t';
-          case '\b': return '\\b';
-          case '\f': return '\\f';
-          default: return '';
-        }
-      });
-    } else {
-      console.log('DEBUG: String starts with {, using as-is');
-      // Still trim even for direct JSON strings in case of trailing whitespace
-      credentialsString = credentialsString.trim();
-    }
-  } catch {
-    console.log('DEBUG: Base64 decode failed, using original');
+  // Decode if base64
+  if (!credentialsString.startsWith('{')) {
+    credentialsString = Buffer.from(credentialsString, 'base64').toString('utf-8');
   }
-  
+
   let credentials;
   try {
-    credentials = JSON.parse(credentialsString);
-    console.log('DEBUG: JSON parse successful, project_id:', credentials.project_id);
-  } catch (parseError: unknown) {
-    const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
-    console.error('DEBUG: JSON parse error:', errorMessage);
-    
-    // Extract position from error message if available
-    const positionMatch = errorMessage.match(/at position (\d+)/);
-    if (positionMatch) {
-      const position = parseInt(positionMatch[1]);
-      const start = Math.max(0, position - 50);
-      const end = Math.min(credentialsString.length, position + 50);
-      console.error('DEBUG: String around error position:', credentialsString.substring(start, end));
-      console.error('DEBUG: Character at error position:', credentialsString.charAt(position));
-      console.error('DEBUG: Character code at error position:', credentialsString.charCodeAt(position));
-    }
-    
-    console.error('DEBUG: Final string length:', credentialsString.length);
-    console.error('DEBUG: Final string ends with }:', credentialsString.endsWith('}'));
-    throw parseError;
+    // This regex specifically finds the private_key value and escapes the newlines *only* within that value.
+    // This makes the entire string safe for JSON.parse, regardless of pretty-printing.
+    const fixedJson = credentialsString.replace(
+      /("private_key":\s*)"((?:\\.|[^"\\])*)"/s,
+      (match, keyPart, valuePart) => {
+        const escapedValue = valuePart.replace(/\n/g, '\\n');
+        return keyPart + '"' + escapedValue + '"';
+      }
+    );
+    credentials = JSON.parse(fixedJson);
+    console.log('DEBUG: Successfully parsed credentials with targeted newline escaping.');
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : 'Unknown parse error';
+    console.error('DEBUG: Failed to process credentials:', errorMessage);
+    throw new Error(`Failed to process credentials: ${errorMessage}`);
   }
 
   const auth = new google.auth.GoogleAuth({
@@ -96,7 +64,7 @@ const fetchEvents = async (calendar: ReturnType<typeof google.calendar>, calenda
     });
     return res.data.items || [];
   } catch (error: unknown) {
-    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error');
+    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error`);
     return []; // Return empty array on error
   }
 };
