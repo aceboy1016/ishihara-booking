@@ -34,16 +34,33 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
 
   const days = Array.from({ length: daysInMonth }, (_, i) => {
     return new Date(displayDate.getFullYear(), displayDate.getMonth(), i + 1);
-  }).filter(day => {
-    // 2ヶ月前ルール: 予約開始可能な日のみ表示
-    const twoMonthsBefore = new Date(day);
-    twoMonthsBefore.setMonth(twoMonthsBefore.getMonth() - 2);
-    
-    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const twoMonthsBeforeDate = new Date(twoMonthsBefore.getFullYear(), twoMonthsBefore.getMonth(), twoMonthsBefore.getDate());
-    
-    return todayDateOnly >= twoMonthsBeforeDate;
   });
+
+  // 祝日判定（簡易版）
+  const isHoliday = (date: Date): boolean => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // 2024年の主要祝日
+    const holidays2024 = [
+      '2024-1-1', '2024-1-8', '2024-2-11', '2024-2-12', '2024-2-23',
+      '2024-3-20', '2024-4-29', '2024-5-3', '2024-5-4', '2024-5-5',
+      '2024-7-15', '2024-8-11', '2024-8-12', '2024-9-16', '2024-9-22',
+      '2024-9-23', '2024-10-14', '2024-11-3', '2024-11-4', '2024-11-23'
+    ];
+    
+    // 2025年の主要祝日
+    const holidays2025 = [
+      '2025-1-1', '2025-1-13', '2025-2-11', '2025-2-23', '2025-2-24',
+      '2025-3-20', '2025-4-29', '2025-5-3', '2025-5-4', '2025-5-5',
+      '2025-5-6', '2025-7-21', '2025-8-11', '2025-9-15', '2025-9-23',
+      '2025-10-13', '2025-11-3', '2025-11-23', '2025-11-24'
+    ];
+    
+    const dateStr = `${year}-${month}-${day}`;
+    return holidays2024.includes(dateStr) || holidays2025.includes(dateStr);
+  };
 
   const goToPreviousMonth = () => {
     const newDate = new Date(displayDate);
@@ -260,12 +277,23 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
           <div className="sticky top-0 left-0 z-30 p-2 font-semibold text-center bg-white border-b border-r text-black">時間</div>
           
           {/* Date headers */}
-          {days.map(day => (
-            <div key={day.toISOString()} className="sticky top-0 z-20 p-2 text-center bg-white border-b whitespace-nowrap">
-              <div className="font-semibold text-black">{`${day.getMonth() + 1}/${day.getDate()}`}</div>
-              <div className="text-xs text-black">{['日', '月', '火', '水', '木', '金', '土'][day.getDay()]}</div>
-            </div>
-          ))}
+          {days.map(day => {
+            const dayOfWeek = day.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 日曜日(0) or 土曜日(6)
+            const isHol = isHoliday(day);
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            
+            let dayColor = 'text-black'; // 平日
+            if (dayOfWeek === 0 || isHol) dayColor = 'text-red-600'; // 日曜日・祝日
+            if (dayOfWeek === 6) dayColor = 'text-blue-600'; // 土曜日
+            
+            return (
+              <div key={day.toISOString()} className="sticky top-0 z-20 p-2 text-center bg-white border-b whitespace-nowrap">
+                <div className="font-semibold text-black">{`${day.getMonth() + 1}/${day.getDate()}`}</div>
+                <div className={`text-xs font-semibold ${dayColor}`}>{dayNames[dayOfWeek]}</div>
+              </div>
+            );
+          })}
 
           {/* Time slots grid */}
           {timeLabels.map(time => (
