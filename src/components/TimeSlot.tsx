@@ -86,7 +86,7 @@ const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore
   return (
     <div 
       className={`h-12 transition-colors duration-200 ${
-        isSelected 
+        isSelected && !isAdminMode
           ? 'bg-blue-600 border-4 border-blue-800' 
           : `${status.className} border-b border-r`
       } ${
