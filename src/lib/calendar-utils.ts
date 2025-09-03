@@ -33,39 +33,7 @@ const getCalendarClient = () => {
       console.log('DEBUG: Decoded first 50 chars:', decoded.substring(0, 50));
       console.log('DEBUG: Decoded last 50 chars:', decoded.substring(decoded.length - 50));
       
-      if (decoded.startsWith('{') && decoded.endsWith('}')) {
-        // Clean up any control characters in the JSON string
-        credentialsString = decoded.replace(/[\u0000-\u001F\u007F]/g, (match) => {
-          switch (match) {
-            case '\n': return '\\n';
-            case '\r': return '\\r';
-            case '\t': return '\\t';
-            case '\b': return '\\b';
-            case '\f': return '\\f';
-            default: return '';
-          }
-        });
-        console.log('DEBUG: Successfully decoded and cleaned base64 credentials');
-      } else {
-        console.log('DEBUG: Decoded string is not valid JSON format');
-        console.log('DEBUG: String starts with {:', decoded.startsWith('{'));
-        console.log('DEBUG: String ends with }:', decoded.endsWith('}'));
-        // Force use the decoded string anyway for debugging
-        credentialsString = decoded.replace(/[\u0000-\u001F\u007F]/g, (match) => {
-          switch (match) {
-            case '\n': return '\\n';
-            case '\r': return '\\r';
-            case '\t': return '\\t';
-            case '\b': return '\\b';
-            case '\f': return '\\f';
-            default: return '';
-          }
-        });
-        console.log('DEBUG: Using cleaned decoded string anyway for debugging');
-        
-        // Remove any trailing whitespace/newlines
-        credentialsString = credentialsString.trim();
-      }
+      credentialsString = decoded.trim();
     } else {
       console.log('DEBUG: String starts with {, using as-is');
       // Still trim even for direct JSON strings in case of trailing whitespace
