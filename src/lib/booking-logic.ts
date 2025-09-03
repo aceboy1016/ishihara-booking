@@ -9,6 +9,32 @@ export interface AvailabilityCheck {
 const ISHIHARA_SESSION_DURATION = 60; // minutes
 const TRAVEL_TIME = 60; // minutes
 
+// 祝日判定（簡易版）
+const isHoliday = (date: Date): boolean => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  
+  // 2024年の主要祝日
+  const holidays2024 = [
+    '2024-1-1', '2024-1-8', '2024-2-11', '2024-2-12', '2024-2-23',
+    '2024-3-20', '2024-4-29', '2024-5-3', '2024-5-4', '2024-5-5',
+    '2024-7-15', '2024-8-11', '2024-8-12', '2024-9-16', '2024-9-22',
+    '2024-9-23', '2024-10-14', '2024-11-3', '2024-11-4', '2024-11-23'
+  ];
+  
+  // 2025年の主要祝日
+  const holidays2025 = [
+    '2025-1-1', '2025-1-13', '2025-2-11', '2025-2-23', '2025-2-24',
+    '2025-3-20', '2025-4-29', '2025-5-3', '2025-5-4', '2025-5-5',
+    '2025-5-6', '2025-7-21', '2025-8-11', '2025-9-15', '2025-9-23',
+    '2025-10-13', '2025-11-3', '2025-11-23', '2025-11-24'
+  ];
+  
+  const dateStr = `${year}-${month}-${day}`;
+  return holidays2024.includes(dateStr) || holidays2025.includes(dateStr);
+};
+
 
 // 1. Check if Ishihara is busy
 const isTrainerBusy = (slotTime: Date, ishiharaBookings: Booking[]): boolean => {
@@ -126,7 +152,7 @@ export const checkAvailability = (
     return { isAvailable: false, reason: 'unavailable_block' };
   }
 
-  // Check if outside business hours (9:00 - 21:30, last booking starts at 21:00)
+  // Check if outside business hours
   const hour = slotTime.getHours();
   const minute = slotTime.getMinutes();
   
@@ -135,9 +161,21 @@ export const checkAvailability = (
     return { isAvailable: false, reason: 'outside_hours' };
   }
   
-  // After 21:30 is outside hours (21:00 and 21:30 are allowed)
-  if (hour > 21 || (hour === 21 && minute > 30)) {
-    return { isAvailable: false, reason: 'outside_hours' };
+  // Check if it's weekend or holiday for shorter hours
+  const dayOfWeek = slotTime.getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday(0) or Saturday(6)
+  const isHol = isHoliday(slotTime);
+  
+  if (isWeekend || isHol) {
+    // Weekend/holiday: 9:00 - 20:00 (last booking starts at 20:00)
+    if (hour > 20) {
+      return { isAvailable: false, reason: 'outside_hours' };
+    }
+  } else {
+    // Weekday: 9:00 - 21:30 (21:00 and 21:30 are allowed)
+    if (hour > 21 || (hour === 21 && minute > 30)) {
+      return { isAvailable: false, reason: 'outside_hours' };
+    }
   }
 
   // Check for all-day events (休日) - these take priority over everything
