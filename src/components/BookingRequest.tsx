@@ -50,8 +50,7 @@ const BookingRequest: React.FC<BookingRequestProps> = ({
       return `【予約希望】
 ${formatDate(slot.date)} ${formatTime(slot.time)} @${getStoreDisplayName(slot.store)}
 
-上記の時間で石原トレーナーのパーソナルトレーニング予約は可能でしょうか？
-よろしくお願いいたします。`;
+上記の時間で予約は可能でしょうか？`;
     } else {
       const slotList = sortedSlots
         .map((slot) => `・${formatDate(slot.date)} ${formatTime(slot.time)} @${getStoreDisplayName(slot.store)}`)
@@ -60,8 +59,7 @@ ${formatDate(slot.date)} ${formatTime(slot.time)} @${getStoreDisplayName(slot.st
       return `【予約希望】
 ${slotList}
 
-上記候補の中で石原トレーナーのパーソナルトレーニング予約が可能な日時はございますでしょうか？
-よろしくお願いいたします。`;
+上記候補の中で予約が可能な日時はございますでしょうか？`;
     }
   };
 
