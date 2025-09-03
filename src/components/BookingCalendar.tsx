@@ -34,6 +34,15 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
 
   const days = Array.from({ length: daysInMonth }, (_, i) => {
     return new Date(displayDate.getFullYear(), displayDate.getMonth(), i + 1);
+  }).filter(day => {
+    // 2ヶ月前ルール: 予約開始可能な日のみ表示
+    const twoMonthsBefore = new Date(day);
+    twoMonthsBefore.setMonth(twoMonthsBefore.getMonth() - 2);
+    
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const twoMonthsBeforeDate = new Date(twoMonthsBefore.getFullYear(), twoMonthsBefore.getMonth(), twoMonthsBefore.getDate());
+    
+    return todayDateOnly >= twoMonthsBeforeDate;
   });
 
   const goToPreviousMonth = () => {
@@ -232,10 +241,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
               </div>
             </div>
             <div>
-              <div className="text-sm font-semibold text-blue-900 mb-1">営業時間について</div>
+              <div className="text-sm font-semibold text-blue-900 mb-1">予約について</div>
               <div className="text-xs text-blue-800 leading-relaxed">
-                表示時間帯（9:00-21:30）以外でのご希望がございましたら、<br/>
-                LINEにて直接お問い合わせください。
+                ・営業時間：9:00-21:30<br/>
+                ・予約開始：2ヶ月前の同日から予約可能<br/>
+                ・時間外のご希望はLINEにて直接お問い合わせください
               </div>
             </div>
           </div>

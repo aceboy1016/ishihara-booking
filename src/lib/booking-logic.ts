@@ -104,10 +104,25 @@ export const checkAvailability = (
   store: 'ebisu' | 'hanzoomon',
   allBookings: BookingData
 ): AvailabilityCheck => {
-  // Check for the 3-hour booking deadline
   const now = new Date();
+  
+  // Check for the 3-hour booking deadline
   const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
   if (slotTime <= threeHoursFromNow) {
+    return { isAvailable: false, reason: 'unavailable_block' };
+  }
+
+  // Check if the booking date is available based on 2-month advance rule
+  // Booking becomes available 2 months before the target date
+  const twoMonthsBefore = new Date(slotTime);
+  twoMonthsBefore.setMonth(twoMonthsBefore.getMonth() - 2);
+  
+  // Only check date (ignore time) for the 2-month rule
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const twoMonthsBeforeDate = new Date(twoMonthsBefore.getFullYear(), twoMonthsBefore.getMonth(), twoMonthsBefore.getDate());
+  
+  if (todayDateOnly < twoMonthsBeforeDate) {
     return { isAvailable: false, reason: 'unavailable_block' };
   }
 
