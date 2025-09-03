@@ -64,7 +64,7 @@ const fetchEvents = async (calendar: ReturnType<typeof google.calendar>, calenda
     });
     return res.data.items || [];
   } catch (error: unknown) {
-    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error`);
+    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error');
     return []; // Return empty array on error
   }
 };
