@@ -30,7 +30,7 @@ const getCalendarClient = () => {
     // This regex specifically finds the private_key value and escapes the newlines *only* within that value.
     // This makes the entire string safe for JSON.parse, regardless of pretty-printing.
     const fixedJson = credentialsString.replace(
-      /("private_key":\s*)"((?:\\.|[^"\\])*)"/s,
+      /("private_key":\s*)"((?:\\.|[^"\\])*)"/,
       (match, keyPart, valuePart) => {
         const escapedValue = valuePart.replace(/\n/g, '\\n');
         return keyPart + '"' + escapedValue + '"';
