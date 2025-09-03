@@ -88,7 +88,7 @@ const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore
       className={`border-b border-r h-12 transition-colors duration-200 ${status.className} ${
         (isAdminMode || result.isAvailable) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
       } ${
-        isSelected ? 'ring-2 ring-blue-500 ring-inset relative z-10' : ''
+        isSelected ? 'ring-4 ring-blue-600 relative z-10 shadow-lg' : ''
       } flex items-center justify-center`} 
       title={status.title}
       onClick={onClick}
