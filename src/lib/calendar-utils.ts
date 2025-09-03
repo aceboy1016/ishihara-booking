@@ -62,9 +62,14 @@ const getCalendarClient = () => {
           }
         });
         console.log('DEBUG: Using cleaned decoded string anyway for debugging');
+        
+        // Remove any trailing whitespace/newlines
+        credentialsString = credentialsString.trim();
       }
     } else {
       console.log('DEBUG: String starts with {, using as-is');
+      // Still trim even for direct JSON strings in case of trailing whitespace
+      credentialsString = credentialsString.trim();
     }
   } catch {
     console.log('DEBUG: Base64 decode failed, using original');
