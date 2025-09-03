@@ -244,7 +244,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
       
       <div className="overflow-auto relative max-h-[80vh]">
         <div className={`grid text-sm min-w-max`} style={{
-          gridTemplateColumns: `120px repeat(${days.length}, minmax(80px, 1fr))`
+          gridTemplateColumns: `80px repeat(${days.length}, minmax(60px, 1fr))`
         }}>
           {/* Time column header */}
           <div className="sticky top-0 left-0 z-30 p-2 font-semibold text-center bg-white border-b border-r text-black">時間</div>
