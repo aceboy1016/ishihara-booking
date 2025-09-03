@@ -30,12 +30,18 @@ const getCalendarClient = () => {
       const decoded = Buffer.from(credentialsString, 'base64').toString('utf-8');
       console.log('DEBUG: Decoded length:', decoded.length);
       console.log('DEBUG: Decoded first 50 chars:', decoded.substring(0, 50));
+      console.log('DEBUG: Decoded last 50 chars:', decoded.substring(decoded.length - 50));
       
       if (decoded.startsWith('{') && decoded.endsWith('}')) {
         credentialsString = decoded;
         console.log('DEBUG: Successfully decoded base64 credentials');
       } else {
         console.log('DEBUG: Decoded string is not valid JSON format');
+        console.log('DEBUG: String starts with {:', decoded.startsWith('{'));
+        console.log('DEBUG: String ends with }:', decoded.endsWith('}'));
+        // Force use the decoded string anyway for debugging
+        credentialsString = decoded;
+        console.log('DEBUG: Using decoded string anyway for debugging');
       }
     } else {
       console.log('DEBUG: String starts with {, using as-is');
