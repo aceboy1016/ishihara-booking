@@ -24,7 +24,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetch('/api/bookings')
+      fetch('/api/bookings', { cache: 'no-store' })
         .then(res => res.json())
         .then(data => setBookingData(data));
     }

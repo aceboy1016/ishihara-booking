@@ -35,7 +35,7 @@ export default function Home() {
   const fetchBookingData = async () => {
     try {
       setApiStatus('loading');
-      const res = await fetch('/api/bookings');
+      const res = await fetch('/api/bookings', { cache: 'no-store' });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: Failed to fetch booking data`);
       }
