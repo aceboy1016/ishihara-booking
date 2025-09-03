@@ -21,6 +21,7 @@ const getCalendarClient = () => {
   
   console.log('DEBUG: Raw credentials length:', credentialsString.length);
   console.log('DEBUG: First 50 chars:', credentialsString.substring(0, 50));
+  console.log('DEBUG: Last 50 chars:', credentialsString.substring(credentialsString.length - 50));
   
   // Check if the credentials are base64 encoded
   try {
@@ -76,7 +77,20 @@ const getCalendarClient = () => {
   } catch (parseError: unknown) {
     const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
     console.error('DEBUG: JSON parse error:', errorMessage);
-    console.error('DEBUG: String around error position:', credentialsString.substring(70, 90));
+    
+    // Extract position from error message if available
+    const positionMatch = errorMessage.match(/at position (\d+)/);
+    if (positionMatch) {
+      const position = parseInt(positionMatch[1]);
+      const start = Math.max(0, position - 50);
+      const end = Math.min(credentialsString.length, position + 50);
+      console.error('DEBUG: String around error position:', credentialsString.substring(start, end));
+      console.error('DEBUG: Character at error position:', credentialsString.charAt(position));
+      console.error('DEBUG: Character code at error position:', credentialsString.charCodeAt(position));
+    }
+    
+    console.error('DEBUG: Final string length:', credentialsString.length);
+    console.error('DEBUG: Final string ends with }:', credentialsString.endsWith('}'));
     throw parseError;
   }
 
