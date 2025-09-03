@@ -32,7 +32,7 @@ const getCalendarClient = () => {
       credentialsString = decoded;
       console.log('DEBUG: Using decoded credentials');
     }
-  } catch (error) {
+  } catch {
     console.log('DEBUG: Base64 decode failed, using original');
   }
   
@@ -40,8 +40,9 @@ const getCalendarClient = () => {
   try {
     credentials = JSON.parse(credentialsString);
     console.log('DEBUG: JSON parse successful, project_id:', credentials.project_id);
-  } catch (parseError) {
-    console.error('DEBUG: JSON parse error at position:', parseError.message);
+  } catch (parseError: unknown) {
+    const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
+    console.error('DEBUG: JSON parse error:', errorMessage);
     console.error('DEBUG: String around error position:', credentialsString.substring(70, 90));
     throw parseError;
   }
