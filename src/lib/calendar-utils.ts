@@ -33,7 +33,7 @@ const getCalendarClient = () => {
       console.log('DEBUG: Decoded first 50 chars:', decoded.substring(0, 50));
       console.log('DEBUG: Decoded last 50 chars:', decoded.substring(decoded.length - 50));
       
-      credentialsString = decoded.trim();
+      credentialsString = decoded.trim().replace(/\n/g, "\\n");
     } else {
       console.log('DEBUG: String starts with {, using as-is');
       // Still trim even for direct JSON strings in case of trailing whitespace
