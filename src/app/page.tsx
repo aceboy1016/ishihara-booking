@@ -57,6 +57,17 @@ export default function Home() {
     }
   }, [isAuthenticated]);
 
+  // 5分おきの自動更新
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      fetchBookingData();
+    }, 5 * 60 * 1000); // 5分 = 300,000ミリ秒
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await fetchBookingData();
