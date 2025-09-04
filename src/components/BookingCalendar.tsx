@@ -110,7 +110,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   });
 
   const handleSlotClick = (date: Date, time: string, isAvailable: boolean) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     
     // 閲覧者モードでは予約可能な時間帯のみ選択可能
     if (!isAdminMode && !isAvailable) {
