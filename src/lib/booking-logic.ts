@@ -172,8 +172,8 @@ export const checkAvailability = (
       return { isAvailable: false, reason: 'outside_hours' };
     }
   } else {
-    // Weekday: 9:00 - 21:30 (21:00 and 21:30 are allowed)
-    if (hour > 21 || (hour === 21 && minute > 30)) {
+    // Weekday: 9:00 - 22:00 (21:00, 21:30 are allowed)
+    if (hour >= 22) {
       return { isAvailable: false, reason: 'outside_hours' };
     }
   }

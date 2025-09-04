@@ -260,7 +260,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
             <div>
               <div className="text-sm font-semibold text-blue-900 mb-1">予約について</div>
               <div className="text-xs text-blue-800 leading-relaxed">
-                ・営業時間：平日 9:00-21:30 / 土日祝 9:00-20:00<br/>
+                ・営業時間：平日 9:00-22:00 / 土日祝 9:00-20:00<br/>
                 ・予約開始：2ヶ月前の同日から予約可能<br/>
                 ・時間外のご希望はLINEにて直接お問い合わせください
               </div>
