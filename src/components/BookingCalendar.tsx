@@ -302,7 +302,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
               <div className="sticky left-0 z-20 p-2 text-center bg-white border-b border-r whitespace-nowrap font-medium text-black">{time}</div>
               {/* TimeSlot components */}
               {days.map(day => {
-                const dateStr = day.toISOString().split('T')[0];
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
                 const isSelected = isAdminMode 
                   ? selectedSlot?.date.toISOString().split('T')[0] === dateStr && selectedSlot?.time === time
                   : selectedCells.some(cell => cell.date === dateStr && cell.time === time && cell.store === selectedStore);
