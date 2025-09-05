@@ -19,6 +19,24 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; time: string } | null>(null);
   const [selectedCells, setSelectedCells] = useState<Array<{ date: string; time: string; store: 'ebisu' | 'hanzoomon' }>>([]);
   const [displayDate, setDisplayDate] = useState(currentDate);
+  const [privateEventSettings, setPrivateEventSettings] = useState<Record<string, boolean>>({});
+
+  // プライベート予定設定を取得
+  useEffect(() => {
+    const fetchPrivateEventSettings = async () => {
+      try {
+        const response = await fetch('/api/private-events');
+        if (response.ok) {
+          const data = await response.json();
+          setPrivateEventSettings(data.settings || {});
+        }
+      } catch (error) {
+        console.error('Failed to fetch private event settings:', error);
+      }
+    };
+    
+    fetchPrivateEventSettings();
+  }, [bookings]); // bookingsが変更されたときに設定も再取得
 
   // 現在日から2ヶ月先までの期間設定
   const today = new Date();
@@ -311,7 +329,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                 const [hour, minute] = time.split(':').map(Number);
                 const slotTime = new Date(day);
                 slotTime.setHours(hour, minute, 0, 0);
-                const availabilityResult = checkAvailability(slotTime, selectedStore, bookings);
+                const availabilityResult = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings);
                 
                 return (
                   <TimeSlot 
@@ -323,6 +341,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                     isAdminMode={isAdminMode}
                     onClick={() => handleSlotClick(day, time, availabilityResult.isAvailable)}
                     isSelected={isSelected}
+                    privateEventSettings={privateEventSettings}
                   />
                 );
               })}

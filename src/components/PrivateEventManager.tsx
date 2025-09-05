@@ -52,21 +52,41 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
   const toggleEventBlock = async (eventId: string) => {
     setLoading(true);
     try {
-      setPrivateEvents(prev => 
-        prev.map(event => 
-          event.id === eventId 
-            ? { ...event, isBlocked: !event.isBlocked }
-            : event
-        )
-      );
+      const event = privateEvents.find(e => e.id === eventId);
+      if (!event) return;
       
-      // ここで実際のAPI呼び出しを行う（将来実装）
-      // await updateEventBlockStatus(eventId, !event.isBlocked);
+      const newIsBlocked = !event.isBlocked;
       
-      // データを再取得
-      onRefresh();
+      // API呼び出しで設定を保存
+      const response = await fetch('/api/private-events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          isBlocked: newIsBlocked,
+        }),
+      });
+      
+      if (response.ok) {
+        // 成功した場合のみローカル状態を更新
+        setPrivateEvents(prev => 
+          prev.map(event => 
+            event.id === eventId 
+              ? { ...event, isBlocked: newIsBlocked }
+              : event
+          )
+        );
+        
+        // データを再取得
+        onRefresh();
+      } else {
+        throw new Error('Failed to save setting');
+      }
     } catch (error) {
       console.error('Failed to update event status:', error);
+      alert('設定の保存に失敗しました');
     } finally {
       setLoading(false);
     }

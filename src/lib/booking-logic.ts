@@ -128,7 +128,8 @@ const hasUnavailableBlock = (slotTime: Date, ishiharaBookings: Booking[]): boole
 export const checkAvailability = (
   slotTime: Date,
   store: 'ebisu' | 'hanzoomon',
-  allBookings: BookingData
+  allBookings: BookingData,
+  privateEventSettings: Record<string, boolean> = {}
 ): AvailabilityCheck => {
   const now = new Date();
   
@@ -188,11 +189,19 @@ export const checkAvailability = (
     return { isAvailable: false, reason: 'unavailable_block' };
   }
 
-  if (isTrainerBusy(slotTime, allBookings.ishihara)) {
+  // フィルタリングされたishihara予定（無視設定されたプライベート予定を除外）
+  const filteredIshiharaBookings = allBookings.ishihara.filter(booking => {
+    if (booking.source === 'private' && privateEventSettings[booking.id] === false) {
+      return false; // 無視設定されたプライベート予定は除外
+    }
+    return true;
+  });
+
+  if (isTrainerBusy(slotTime, filteredIshiharaBookings)) {
     return { isAvailable: false, reason: 'trainer_busy' };
   }
 
-  if (hasTravelConflict(slotTime, store, allBookings.ishihara)) {
+  if (hasTravelConflict(slotTime, store, filteredIshiharaBookings)) {
     return { isAvailable: false, reason: 'travel_conflict' };
   }
 
