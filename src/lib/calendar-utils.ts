@@ -142,8 +142,8 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   
   const ishiharaPrivateFiltered = ishiharaPrivateEvents.filter(event => {
     const title = event.summary || '';
-    // Exclude customer events (ending with "さん")
-    if (title.endsWith('さん')) return false;
+    // Include all private events (they are trainer's personal appointments)
+    // Do not exclude any events from private calendar
     
     // Exclude non-business all-day events
     if (event.start?.date && event.end?.date) { // This is an all-day event
