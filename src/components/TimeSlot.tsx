@@ -51,11 +51,16 @@ const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore
       }
     }
   } else {
-    // 閲覧者モード：シンプルに予約可能/不可のみ
+    // 閲覧者モード：シンプルに予約可能/不可のみ（デバッグ用に理由も表示）
     if (result.isAvailable) {
       status = { className: 'bg-emerald-400', title: '予約可能' };
     } else {
-      status = { className: 'bg-slate-400', title: '予約不可' };
+      const reasonText = result.reason === 'trainer_busy' ? 'トレーナー予約済み' :
+                        result.reason === 'travel_conflict' ? '移動時間' :
+                        result.reason === 'store_full' ? '満室' :
+                        result.reason === 'unavailable_block' ? '予約不可' :
+                        '営業時間外';
+      status = { className: 'bg-slate-400', title: `予約不可 - ${reasonText}` };
     }
   }
 
