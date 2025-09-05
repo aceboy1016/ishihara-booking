@@ -85,7 +85,7 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   ]);
 
   // Helper to transform Google Calendar events to our Booking type
-  const transformEvent = (event: calendar_v3.Schema$Event): Booking => {
+  const transformEvent = (event: calendar_v3.Schema$Event, source: 'work' | 'private' | 'ebisu' | 'hanzoomon' = 'work'): Booking => {
     let start: string;
     let end: string;
 
@@ -116,6 +116,7 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
       start,
       end,
       title: event.summary || undefined,
+      source,
     };
   };
 
@@ -160,9 +161,12 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
     return true;
   });
   
-  const ishiharaBookings = [...ishiharaWorkFiltered.map(transformEvent), ...ishiharaPrivateFiltered.map(transformEvent)];
-  const ebisuBookings = ebisuEvents.map(transformEvent);
-  const hanzomonBookings = hanzomonEvents.map(transformEvent);
+  const ishiharaBookings = [
+    ...ishiharaWorkFiltered.map(event => transformEvent(event, 'work')), 
+    ...ishiharaPrivateFiltered.map(event => transformEvent(event, 'private'))
+  ];
+  const ebisuBookings = ebisuEvents.map(event => transformEvent(event, 'ebisu'));
+  const hanzomonBookings = hanzomonEvents.map(event => transformEvent(event, 'hanzoomon'));
 
   // Add store and room info based on the booking title
   ishiharaBookings.forEach(b => {

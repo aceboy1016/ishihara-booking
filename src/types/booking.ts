@@ -6,6 +6,7 @@ export interface Booking {
   title?: string;
   store?: 'ebisu' | 'hanzoomon';
   room?: 'A' | 'B'; // 恵比寿店のみ
+  source?: 'work' | 'private' | 'ebisu' | 'hanzoomon'; // カレンダーソース
 }
 
 export interface BookingData {
