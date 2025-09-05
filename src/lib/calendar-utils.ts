@@ -123,8 +123,8 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   // Combine work and private events for the trainer, but exclude customer events and non-business all-day events
   const ishiharaWorkFiltered = ishiharaWorkEvents.filter(event => {
     const title = event.summary || '';
-    // Exclude customer events (ending with "さん")
-    if (title.endsWith('さん')) return false;
+    // Include all work events (these are trainer's scheduled appointments)
+    // Do not exclude any events from work calendar
     
     // Exclude non-business all-day events (birthdays, personal events, etc.)
     if (event.start?.date && event.end?.date) { // This is an all-day event
