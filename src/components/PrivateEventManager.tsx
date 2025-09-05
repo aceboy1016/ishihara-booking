@@ -26,9 +26,26 @@ interface PrivateEventManagerProps {
 const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, onRefresh }) => {
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savedSettings, setSavedSettings] = useState<Record<string, boolean>>({});
+
+  // 保存された設定を取得
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/private-events');
+        if (response.ok) {
+          const data = await response.json();
+          setSavedSettings(data.settings || {});
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
-    if (bookingData) {
+    if (bookingData && Object.keys(savedSettings).length >= 0) {
       // プライベートカレンダー由来のイベントを抽出
       const events = bookingData.ishihara
         .filter((event) => event.source === 'private')
@@ -37,12 +54,12 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
           title: event.title || '(タイトルなし)',
           start: event.start,
           end: event.end,
-          isBlocked: true // デフォルトはブロック対象
+          isBlocked: savedSettings[event.id] !== false // 保存された設定を反映、未設定時はブロック
         }));
       
       setPrivateEvents(events);
     }
-  }, [bookingData]);
+  }, [bookingData, savedSettings]);
 
   const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -71,6 +88,11 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
       
       if (response.ok) {
         // 成功した場合のみローカル状態を更新
+        setSavedSettings(prev => ({
+          ...prev,
+          [eventId]: newIsBlocked
+        }));
+        
         setPrivateEvents(prev => 
           prev.map(event => 
             event.id === eventId 
