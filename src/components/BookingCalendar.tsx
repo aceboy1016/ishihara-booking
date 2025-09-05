@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookingData } from '../types/booking';
 import { checkAvailability } from '../lib/booking-logic';
 import TimeSlot from './TimeSlot';
