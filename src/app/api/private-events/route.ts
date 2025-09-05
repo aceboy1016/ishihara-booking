@@ -6,7 +6,7 @@ interface EventSetting {
 }
 
 // 簡易的にメモリに保存（実際のプロダクションではデータベースを使用）
-let eventSettings: Map<string, boolean> = new Map();
+const eventSettings: Map<string, boolean> = new Map();
 
 export async function GET() {
   try {
