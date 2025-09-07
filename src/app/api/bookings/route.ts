@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getGoogleCalendarBookings } from '../../../lib/calendar-utils';
 
-export const revalidate = 300; // Cache for 5 minutes
+export const revalidate = 0; // No cache for immediate updates
 export const dynamic = 'force-dynamic'; // Force dynamic rendering
 
 export async function GET() {
@@ -18,7 +18,7 @@ export async function GET() {
     
     return NextResponse.json(bookings, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Content-Type': 'application/json',
       },
     });

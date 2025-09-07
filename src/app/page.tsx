@@ -35,7 +35,14 @@ export default function Home() {
   const fetchBookingData = async () => {
     try {
       setApiStatus('loading');
-      const res = await fetch('/api/bookings', { cache: 'no-store' });
+      const res = await fetch(`/api/bookings?t=${Date.now()}&r=${Math.random()}`, { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: Failed to fetch booking data`);
       }
@@ -73,6 +80,10 @@ export default function Home() {
     setIsRefreshing(true);
     await fetchBookingData();
     setIsRefreshing(false);
+  };
+
+  const handleForceReload = () => {
+    window.location.reload();
   };
 
   const handleLoginSuccess = () => {
@@ -184,7 +195,7 @@ export default function Home() {
             </div>
 
             {/* 手動更新ボタン */}
-            <div className="bg-white p-3 rounded border">
+            <div className="bg-white p-3 rounded border space-y-2">
               <button 
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
@@ -195,6 +206,12 @@ export default function Home() {
                 }`}
               >
                 {isRefreshing ? '更新中...' : 'データ更新'}
+              </button>
+              <button 
+                onClick={handleForceReload}
+                className="w-full px-3 py-2 rounded font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                🔄 強制リロード
               </button>
             </div>
           </div>
