@@ -16,6 +16,7 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState<'ebisu' | 'hanzoomon'>('ebisu');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminUser, setAdminUser] = useState<{name: string, role: string, loginTime: string} | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [apiStatus, setApiStatus] = useState<'success' | 'error' | 'loading'>('loading');
@@ -28,6 +29,15 @@ export default function Home() {
     const adminAuth = sessionStorage.getItem('isAdminAuthenticated');
     if (adminAuth === 'true') {
       setIsAdminAuthenticated(true);
+    }
+
+    const userData = sessionStorage.getItem('adminUser');
+    if (userData) {
+      try {
+        setAdminUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Failed to parse admin user data:', error);
+      }
     }
     setLoading(false);
   }, []);
@@ -86,8 +96,12 @@ export default function Home() {
     window.location.reload();
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userData?: {name: string, role: string, loginTime: string}) => {
     sessionStorage.setItem('isAuthenticated', 'true');
+    if (userData) {
+      sessionStorage.setItem('adminUser', JSON.stringify(userData));
+      setAdminUser(userData);
+    }
     setIsAuthenticated(true);
   };
 
@@ -106,6 +120,10 @@ export default function Home() {
             const data = await response.json();
             if (data.isAdmin) {
               sessionStorage.setItem('isAdminAuthenticated', 'true');
+              if (data.user) {
+                sessionStorage.setItem('adminUser', JSON.stringify(data.user));
+                setAdminUser(data.user);
+              }
               setIsAdminAuthenticated(true);
               setIsAdminMode(true);
             }
@@ -117,6 +135,13 @@ export default function Home() {
         }
       }
     } else {
+      // 管理者モードを終了
+      if (isAdminMode) {
+        sessionStorage.removeItem('isAdminAuthenticated');
+        sessionStorage.removeItem('adminUser');
+        setIsAdminAuthenticated(false);
+        setAdminUser(null);
+      }
       setIsAdminMode(!isAdminMode);
     }
   };
@@ -135,16 +160,26 @@ export default function Home() {
           石原トレーナー 予約早見表
         </h1>
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <button
-            onClick={handleAdminToggle}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              isAdminMode 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {isAdminMode ? '管理者モード' : '閲覧者モード'}
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={handleAdminToggle}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                isAdminMode 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {isAdminMode ? '管理者モード' : '閲覧者モード'}
+            </button>
+            {isAdminMode && adminUser && (
+              <div className="text-xs text-center">
+                <div className="text-blue-600 font-medium">👤 {adminUser.name} ({adminUser.role})</div>
+                <div className="text-gray-500">
+                  {new Date(adminUser.loginTime).toLocaleString('ja-JP')}
+                </div>
+              </div>
+            )}
+          </div>
           <StoreFilter selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
         </div>
       </header>

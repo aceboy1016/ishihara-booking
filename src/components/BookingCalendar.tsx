@@ -40,18 +40,24 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
 
   // 現在日から2ヶ月先までの期間設定
   const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // 時刻を00:00:00にリセット
   const twoMonthsLater = new Date(today);
   twoMonthsLater.setMonth(twoMonthsLater.getMonth() + 2);
   
-  // displayDateの月の1日から末日まで表示
+  // 当日以降から表示
   const startOfMonth = new Date(displayDate.getFullYear(), displayDate.getMonth(), 1);
   const endOfMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 0);
   
-  // その月の日数を取得
-  const daysInMonth = endOfMonth.getDate();
+  // 表示開始日を決定（当日 or 月の1日の遅い方）
+  const startDate = new Date(Math.max(todayDateOnly.getTime(), startOfMonth.getTime()));
+  
+  // 表示する日数を計算
+  const totalDays = Math.ceil((endOfMonth.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
 
-  const days = Array.from({ length: daysInMonth }, (_, i) => {
-    return new Date(displayDate.getFullYear(), displayDate.getMonth(), i + 1);
+  const days = Array.from({ length: totalDays }, (_, i) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    return date;
   });
 
   // 祝日判定（簡易版）
@@ -295,7 +301,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
           <div className="sticky top-0 left-0 z-30 py-1 px-1 text-xs font-semibold text-center bg-white border-b border-r text-black">時間</div>
           
           {/* Date headers */}
-          {days.map(day => {
+          {days.filter(day => day >= todayDateOnly).map(day => {
             const dayOfWeek = day.getDay();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 日曜日(0) or 土曜日(6)
             const isHol = isHoliday(day);
@@ -319,7 +325,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
               {/* Time label row */}
               <div className="sticky left-0 z-20 py-1 px-1 text-xs text-center bg-white border-b border-r whitespace-nowrap font-medium text-black">{time}</div>
               {/* TimeSlot components */}
-              {days.map(day => {
+              {days.filter(day => day >= todayDateOnly).map(day => {
                 const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
                 const isSelected = isAdminMode 
                   ? selectedSlot?.date.toISOString().split('T')[0] === dateStr && selectedSlot?.time === time

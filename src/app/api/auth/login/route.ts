@@ -4,11 +4,25 @@ export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json();
     
-    // 管理者モードのパスワード
-    const adminPassword = 'junnya1016?';
+    // 管理者ユーザーリスト
+    const adminUsers = {
+      'junnya1016?': { name: '石原', role: 'オーナー' },
+      'admin123': { name: 'スタッフA', role: '管理者' },
+      'staff456': { name: 'スタッフB', role: 'スタッフ' }
+    };
     
-    if (password === adminPassword) {
-      return NextResponse.json({ success: true, isAdmin: true });
+    const user = adminUsers[password as keyof typeof adminUsers];
+    
+    if (user) {
+      return NextResponse.json({ 
+        success: true, 
+        isAdmin: true,
+        user: {
+          name: user.name,
+          role: user.role,
+          loginTime: new Date().toISOString()
+        }
+      });
     } else {
       return NextResponse.json(
         { message: 'パスワードが正しくありません' },
