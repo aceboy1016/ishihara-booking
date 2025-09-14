@@ -64,6 +64,31 @@ const hasTravelConflict = (slotTime: Date, store: 'ebisu' | 'hanzoomon', ishihar
   });
 };
 
+// Helper function to check if an event is a TOPFORM Ishihara facility hold and not a real booking
+const isTOPFORMIshiharaHold = (booking: Booking, slotTime: Date, allBookings: BookingData): boolean => {
+  // Check if this is a TOPFORM Ishihara facility hold
+  const title = booking.title || '';
+  if (!title.includes('TOPFORM') || !title.includes('石原') || !title.includes('淳哉')) {
+    return false;
+  }
+
+  // Check if Ishihara has any real booking at the same time in his work calendar
+  const slotEndTime = new Date(slotTime.getTime() + ISHIHARA_SESSION_DURATION * 60000);
+  
+  const hasRealIshiharaBooking = allBookings.ishihara.some(ishiharaBooking => {
+    if (ishiharaBooking.source !== 'work') return false; // Only check work calendar
+    
+    const bookingStart = new Date(ishiharaBooking.start);
+    const bookingEnd = new Date(ishiharaBooking.end);
+    
+    // Check for any overlap between the slot and Ishihara's real booking
+    return slotTime < bookingEnd && slotEndTime > bookingStart;
+  });
+
+  // If Ishihara doesn't have a real booking, this facility hold should be ignored
+  return !hasRealIshiharaBooking;
+};
+
 // 3. Check if the store is full
 const isStoreFull = (slotTime: Date, store: 'ebisu' | 'hanzoomon', allBookings: BookingData): boolean => {
   const slotEndTime = new Date(slotTime.getTime() + ISHIHARA_SESSION_DURATION * 60000);
@@ -73,7 +98,14 @@ const isStoreFull = (slotTime: Date, store: 'ebisu' | 'hanzoomon', allBookings: 
     const bookingsInSlot = ebisuBookings.filter(b => {
         const bookingStart = new Date(b.start);
         const bookingEnd = new Date(b.end);
-        return slotTime < bookingEnd && slotEndTime > bookingStart;
+        const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
+        
+        // If this overlaps and is a TOPFORM Ishihara hold without real booking, ignore it
+        if (hasOverlap && isTOPFORMIshiharaHold(b, slotTime, allBookings)) {
+          return false;
+        }
+        
+        return hasOverlap;
     });
     const roomA_booked = bookingsInSlot.some(b => b.room === 'A');
     const roomB_booked = bookingsInSlot.some(b => b.room === 'B');
@@ -83,7 +115,14 @@ const isStoreFull = (slotTime: Date, store: 'ebisu' | 'hanzoomon', allBookings: 
     const bookingsInSlot = hanzomonBookings.filter(b => {
         const bookingStart = new Date(b.start);
         const bookingEnd = new Date(b.end);
-        return slotTime < bookingEnd && slotEndTime > bookingStart;
+        const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
+        
+        // If this overlaps and is a TOPFORM Ishihara hold without real booking, ignore it
+        if (hasOverlap && isTOPFORMIshiharaHold(b, slotTime, allBookings)) {
+          return false;
+        }
+        
+        return hasOverlap;
     });
     return bookingsInSlot.length >= 3;
   }
