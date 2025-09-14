@@ -21,6 +21,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
   const fetchBookingData = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Fetching booking data for admin panel...');
       const response = await fetch(`/api/bookings?t=${Date.now()}`, { 
         cache: 'no-store',
         headers: {
@@ -29,10 +30,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
           'Expires': '0'
         }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log('📊 Booking data received:', {
+        hasIshihara: !!data.ishihara,
+        ishiharaCount: data.ishihara?.length || 0,
+        hasEbisu: !!data.ebisu,
+        ebisuCount: data.ebisu?.length || 0,
+        hasHanzoomon: !!data.hanzoomon,
+        hanzomonCount: data.hanzoomon?.length || 0
+      });
+      
       setBookingData(data);
     } catch (error) {
-      console.error('Failed to fetch booking data:', error);
+      console.error('❌ Failed to fetch booking data:', error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +113,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
       </div>
 
       {/* 予約データが読み込まれた場合のみ管理機能を表示 */}
-      {bookingData && (
+      {bookingData ? (
         <div className="mt-6 space-y-6">
           <PrivateEventManager 
             bookingData={bookingData} 
@@ -108,6 +123,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
             bookingData={bookingData} 
             onRefresh={fetchBookingData}
           />
+        </div>
+      ) : !loading && (
+        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">⚠️ 予約データの読み込みに失敗しました</p>
+          <button 
+            onClick={fetchBookingData}
+            className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+          >
+            再試行
+          </button>
         </div>
       )}
 
