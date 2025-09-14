@@ -1,6 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import PrivateEventManager from './PrivateEventManager';
+import TOPFORMHoldManager from './TOPFORMHoldManager';
 
 interface AdminPanelProps {
   lastUpdate: string;
@@ -8,6 +10,34 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
+  const [bookingData, setBookingData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // 予約データを取得
+  useEffect(() => {
+    fetchBookingData();
+  }, []);
+
+  const fetchBookingData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/bookings?t=${Date.now()}`, { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      const data = await response.json();
+      setBookingData(data);
+    } catch (error) {
+      console.error('Failed to fetch booking data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleManualUpdate = () => {
     alert('手動更新機能は現在開発中です。');
   };
@@ -66,6 +96,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lastUpdate }) => {
           </dl>
         </div>
       </div>
+
+      {/* 予約データが読み込まれた場合のみ管理機能を表示 */}
+      {bookingData && (
+        <div className="mt-6 space-y-6">
+          <PrivateEventManager 
+            bookingData={bookingData} 
+            onRefresh={fetchBookingData}
+          />
+          <TOPFORMHoldManager 
+            bookingData={bookingData} 
+            onRefresh={fetchBookingData}
+          />
+        </div>
+      )}
+
+      {/* ローディング状態の表示 */}
+      {loading && (
+        <div className="mt-6 text-center text-gray-500">
+          データを読み込み中...
+        </div>
+      )}
     </div>
   );
 };

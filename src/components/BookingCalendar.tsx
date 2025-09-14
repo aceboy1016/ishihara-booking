@@ -20,22 +20,32 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   const [selectedCells, setSelectedCells] = useState<Array<{ date: string; time: string; store: 'ebisu' | 'hanzoomon' }>>([]);
   const [displayDate, setDisplayDate] = useState(currentDate);
   const [privateEventSettings, setPrivateEventSettings] = useState<Record<string, boolean>>({});
+  const [topformHoldSettings, setTopformHoldSettings] = useState<Record<string, boolean>>({});
 
-  // プライベート予定設定を取得
+  // プライベート予定設定とTOPFORM枠抑え設定を取得
   useEffect(() => {
-    const fetchPrivateEventSettings = async () => {
+    const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/private-events');
-        if (response.ok) {
-          const data = await response.json();
-          setPrivateEventSettings(data.settings || {});
+        const [privateResponse, topformResponse] = await Promise.all([
+          fetch('/api/private-events'),
+          fetch('/api/topform-holds')
+        ]);
+        
+        if (privateResponse.ok) {
+          const privateData = await privateResponse.json();
+          setPrivateEventSettings(privateData.settings || {});
+        }
+        
+        if (topformResponse.ok) {
+          const topformData = await topformResponse.json();
+          setTopformHoldSettings(topformData.settings || {});
         }
       } catch (error) {
-        console.error('Failed to fetch private event settings:', error);
+        console.error('Failed to fetch event settings:', error);
       }
     };
     
-    fetchPrivateEventSettings();
+    fetchSettings();
   }, [bookings]); // bookingsが変更されたときに設定も再取得
 
   // 現在日から2ヶ月先までの期間設定
@@ -335,7 +345,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                 const [hour, minute] = time.split(':').map(Number);
                 const slotTime = new Date(day);
                 slotTime.setHours(hour, minute, 0, 0);
-                const availabilityResult = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings);
+                const availabilityResult = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings, topformHoldSettings);
                 
                 return (
                   <TimeSlot 
