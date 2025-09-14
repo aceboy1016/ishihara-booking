@@ -77,8 +77,13 @@ const isTOPFORMIshiharaHold = (
     return false;
   }
 
+  // Debug logging for TOPFORM holds
+  console.log(`🔍 TOPFORM Hold Detected: "${title}" at ${slotTime.toISOString()}`);
+  console.log(`📋 Booking ID: ${booking.id}, Settings:`, topformHoldSettings[booking.id]);
+
   // Check if this specific hold is set to be ignored (always ignore)
   if (topformHoldSettings[booking.id] === true) {
+    console.log(`✅ Hold ${booking.id} set to ALWAYS IGNORE`);
     return true; // Always ignore this hold
   }
 
@@ -92,11 +97,18 @@ const isTOPFORMIshiharaHold = (
     const bookingEnd = new Date(ishiharaBooking.end);
     
     // Check for any overlap between the slot and Ishihara's real booking
-    return slotTime < bookingEnd && slotEndTime > bookingStart;
+    const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
+    if (hasOverlap) {
+      console.log(`📅 Found overlapping Ishihara work booking: "${ishiharaBooking.title}" ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
+    }
+    return hasOverlap;
   });
 
   // If Ishihara doesn't have a real booking, this facility hold should be ignored
-  return !hasRealIshiharaBooking;
+  const shouldIgnore = !hasRealIshiharaBooking;
+  console.log(`🎯 Hold "${title}" - hasRealBooking: ${hasRealIshiharaBooking}, shouldIgnore: ${shouldIgnore}`);
+  
+  return shouldIgnore;
 };
 
 // 3. Check if the store is full
@@ -110,20 +122,36 @@ const isStoreFull = (
 
   if (store === 'ebisu') {
     const ebisuBookings = allBookings.ebisu;
+    console.log(`🏪 Checking Ebisu store availability for ${slotTime.toISOString()}`);
+    console.log(`📋 Total Ebisu bookings in period: ${ebisuBookings.length}`);
+    
     const bookingsInSlot = ebisuBookings.filter(b => {
         const bookingStart = new Date(b.start);
         const bookingEnd = new Date(b.end);
         const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
         
+        if (hasOverlap) {
+          console.log(`⏰ Overlapping booking: "${b.title}" (${b.room || 'No room'}) ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
+        }
+        
         // If this overlaps and is a TOPFORM Ishihara hold without real booking, ignore it
         if (hasOverlap && isTOPFORMIshiharaHold(b, slotTime, allBookings, topformHoldSettings)) {
+          console.log(`🚫 Ignoring TOPFORM hold: "${b.title}"`);
           return false;
         }
         
         return hasOverlap;
     });
+    
+    console.log(`📊 Bookings after filtering: ${bookingsInSlot.length}`);
+    bookingsInSlot.forEach(b => console.log(`  - "${b.title}" (Room: ${b.room || 'No room'})`));
+    
     const roomA_booked = bookingsInSlot.some(b => b.room === 'A');
     const roomB_booked = bookingsInSlot.some(b => b.room === 'B');
+    
+    console.log(`🚪 Room status - A: ${roomA_booked ? 'BOOKED' : 'FREE'}, B: ${roomB_booked ? 'BOOKED' : 'FREE'}`);
+    console.log(`🎯 Store full result: ${roomA_booked && roomB_booked}`);
+    
     return roomA_booked && roomB_booked;
   } else { // hanzoomon
     const hanzomonBookings = allBookings.hanzoomon;
