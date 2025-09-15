@@ -76,7 +76,7 @@ const isTOPFORMIshiharaHold = (
   console.log(`🔍 Checking booking title: "${title}"`);
   console.log(`📝 TOPFORM check: ${title.includes('TOPFORM')}, 石原 check: ${title.includes('石原')}, 淳哉 check: ${title.includes('淳哉')}`);
   
-  if (!title.includes('TOPFORM') || !title.includes('石原') || !title.includes('淳哉')) {
+  if (!title.includes('TOPFORM') || !title.includes('石原 淳哉')) {
     console.log(`❌ Not a TOPFORM hold: "${title}"`);
     return false;
   }
