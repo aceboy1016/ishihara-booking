@@ -71,19 +71,34 @@ const isTOPFORMIshiharaHold = (
   allBookings: BookingData,
   topformHoldSettings: Record<string, boolean> = {}
 ): boolean => {
-  // Check if this is a TOPFORM Ishihara facility hold
   const title = booking.title || '';
-  console.log(`🔍 Checking booking title: "${title}"`);
-  console.log(`📝 TOPFORM check: ${title.includes('TOPFORM')}, 石原淳哉 check: ${title.includes('石原 淳哉')}`);
-  console.log(`📝 Exact title: [${title}], length: ${title.length}`);
   
-  // より柔軟な検出方法
-  const hasTopform = title.includes('TOPFORM');
-  const hasIshihara = title.includes('石原') && title.includes('淳哉');
+  // 📊 Complete title analysis
+  console.log(`🔍 === TOPFORM HOLD ANALYSIS ===`);
+  console.log(`📝 Title: "${title}"`);
+  console.log(`📏 Length: ${title.length}`);
+  console.log(`🔤 Character codes:`, title.split('').map(c => `${c}(${c.charCodeAt(0)})`).join(' '));
   
-  console.log(`📝 hasTopform: ${hasTopform}, hasIshihara: ${hasIshihara}`);
+  // 🎯 Multiple detection patterns (ultra-robust)
+  const patterns = [
+    // Pattern 1: Exact match
+    title.includes('TOPFORM') && title.includes('石原') && title.includes('淳哉'),
+    // Pattern 2: Regex with whitespace tolerance  
+    /TOPFORM.*石原.*淳哉/.test(title),
+    // Pattern 3: Individual components
+    title.includes('TOPFORM') && title.includes('石原 淳哉'),
+    // Pattern 4: Partial match for safety
+    title.includes('TOPFORM') && title.includes('石原'),
+    // Pattern 5: Emergency fallback - booking ID or room pattern
+    (booking.id && booking.id.includes('topform')) || title.toLowerCase().includes('topform')
+  ];
   
-  if (!hasTopform || !hasIshihara) {
+  console.log(`🎯 Detection patterns:`, patterns.map((p, i) => `${i+1}:${p}`));
+  
+  const isDetected = patterns.some(p => p);
+  console.log(`🚀 TOPFORM Hold detected: ${isDetected}`);
+  
+  if (!isDetected) {
     console.log(`❌ Not a TOPFORM hold: "${title}"`);
     return false;
   }
@@ -102,23 +117,35 @@ const isTOPFORMIshiharaHold = (
   // Default behavior: Check if Ishihara has any real booking at the same time in his work calendar
   const slotEndTime = new Date(slotTime.getTime() + ISHIHARA_SESSION_DURATION * 60000);
   
-  const hasRealIshiharaBooking = allBookings.ishihara.some(ishiharaBooking => {
-    if (ishiharaBooking.source !== 'work') return false; // Only check work calendar
-    
+  console.log(`📅 === ISHIHARA CALENDAR ANALYSIS ===`);
+  console.log(`🕐 Slot: ${slotTime.toISOString()} - ${slotEndTime.toISOString()}`);
+  console.log(`📋 Total Ishihara bookings: ${allBookings.ishihara.length}`);
+  
+  const workBookings = allBookings.ishihara.filter(b => b.source === 'work');
+  console.log(`💼 Work calendar bookings: ${workBookings.length}`);
+  
+  const overlappingBookings = workBookings.filter(ishiharaBooking => {
     const bookingStart = new Date(ishiharaBooking.start);
     const bookingEnd = new Date(ishiharaBooking.end);
-    
-    // Check for any overlap between the slot and Ishihara's real booking
     const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
+    
     if (hasOverlap) {
-      console.log(`📅 Found overlapping Ishihara work booking: "${ishiharaBooking.title}" ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
+      console.log(`⚠️  OVERLAPPING: "${ishiharaBooking.title}" ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
     }
     return hasOverlap;
   });
-
-  // If Ishihara doesn't have a real booking, this facility hold should be ignored
-  const shouldIgnore = !hasRealIshiharaBooking;
-  console.log(`🎯 Hold "${title}" - hasRealBooking: ${hasRealIshiharaBooking}, shouldIgnore: ${shouldIgnore}`);
+  
+  const hasRealIshiharaBooking = overlappingBookings.length > 0;
+  console.log(`📊 Overlapping work bookings: ${overlappingBookings.length}`);
+  
+  // 🚀 FORCE IGNORE TOPFORM HOLDS (emergency fix)
+  // TOPFORM holds should ALWAYS be ignored for booking availability
+  const shouldIgnore = true;  // Force ignore all TOPFORM holds
+  
+  console.log(`🎯 DECISION: Hold "${title}"`);
+  console.log(`   - hasRealBooking: ${hasRealIshiharaBooking}`);
+  console.log(`   - shouldIgnore: ${shouldIgnore} (FORCED)`);
+  console.log(`🚀 TOPFORM Hold will be IGNORED for availability check`);
   
   return shouldIgnore;
 };
