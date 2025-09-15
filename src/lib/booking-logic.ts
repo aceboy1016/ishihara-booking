@@ -74,9 +74,16 @@ const isTOPFORMIshiharaHold = (
   // Check if this is a TOPFORM Ishihara facility hold
   const title = booking.title || '';
   console.log(`🔍 Checking booking title: "${title}"`);
-  console.log(`📝 TOPFORM check: ${title.includes('TOPFORM')}, 石原 check: ${title.includes('石原')}, 淳哉 check: ${title.includes('淳哉')}`);
+  console.log(`📝 TOPFORM check: ${title.includes('TOPFORM')}, 石原淳哉 check: ${title.includes('石原 淳哉')}`);
+  console.log(`📝 Exact title: [${title}], length: ${title.length}`);
   
-  if (!title.includes('TOPFORM') || !title.includes('石原 淳哉')) {
+  // より柔軟な検出方法
+  const hasTopform = title.includes('TOPFORM');
+  const hasIshihara = title.includes('石原') && title.includes('淳哉');
+  
+  console.log(`📝 hasTopform: ${hasTopform}, hasIshihara: ${hasIshihara}`);
+  
+  if (!hasTopform || !hasIshihara) {
     console.log(`❌ Not a TOPFORM hold: "${title}"`);
     return false;
   }
