@@ -80,6 +80,7 @@ const isTOPFORMIshiharaHold = (
   // Debug logging for TOPFORM holds
   console.log(`🔍 TOPFORM Hold Detected: "${title}" at ${slotTime.toISOString()}`);
   console.log(`📋 Booking ID: ${booking.id}, Settings:`, topformHoldSettings[booking.id]);
+  console.log(`📅 All topformHoldSettings:`, topformHoldSettings);
 
   // Check if this specific hold is set to be ignored (always ignore)
   if (topformHoldSettings[booking.id] === true) {
