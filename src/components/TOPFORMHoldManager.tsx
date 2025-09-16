@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { isTOPFORMIshiharaBooking } from '../lib/booking-logic';
 
 interface TOPFORMHoldEvent {
   id: string;
@@ -72,7 +73,7 @@ const TOPFORMHoldManager: React.FC<TOPFORMHoldManagerProps> = ({ bookingData, on
       const topformEvents = allFacilityBookings
         .filter((event) => {
           const title = event.title || '';
-          return title.includes('TOPFORM') && title.includes('石原') && title.includes('淳哉');
+          return isTOPFORMIshiharaBooking(title);
         })
         .map((event) => {
           // 同時刻に石原の実際の予約があるかチェック

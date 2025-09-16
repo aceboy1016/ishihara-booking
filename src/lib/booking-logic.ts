@@ -9,6 +9,34 @@ export interface AvailabilityCheck {
 const ISHIHARA_SESSION_DURATION = 60; // minutes
 const TRAVEL_TIME = 60; // minutes
 
+// 🚀 UNIVERSAL TOPFORM DETECTION FUNCTION (exported for use in other components)
+export const isTOPFORMIshiharaBooking = (title: string): boolean => {
+  if (!title) return false;
+  
+  // Normalize the title (remove extra spaces and convert to lowercase for comparison)
+  const normalizedTitle = title.replace(/\s+/g, ' ').toLowerCase();
+  
+  // Multiple detection patterns for maximum reliability
+  const patterns = [
+    // Primary pattern: TOPFORM + 石原 + 淳哉
+    /topform.*石原.*淳哉/i,
+    // Alternative patterns with different spacing
+    /topform.*石原\s*淳哉/i,
+    // Pattern with HALLEL keyword
+    /topform.*石原.*淳哉.*hallel/i,
+    // More flexible pattern
+    /topform.*石原.*淳/i
+  ];
+  
+  const detected = patterns.some(pattern => pattern.test(title));
+  
+  console.log(`🔍 TOPFORM Detection for: "${title}"`);
+  console.log(`   - Normalized: "${normalizedTitle}"`);
+  console.log(`   - Detected: ${detected}`);
+  
+  return detected;
+};
+
 // 祝日判定（簡易版）
 const isHoliday = (date: Date): boolean => {
   const year = date.getFullYear();
@@ -37,30 +65,122 @@ const isHoliday = (date: Date): boolean => {
 
 
 // 1. Check if Ishihara is busy
-const isTrainerBusy = (slotTime: Date, ishiharaBookings: Booking[]): boolean => {
+const isTrainerBusy = (
+  slotTime: Date, 
+  ishiharaBookings: Booking[], 
+  allBookings: BookingData,
+  topformHoldSettings: Record<string, boolean> = {}
+): boolean => {
   const slotEndTime = new Date(slotTime.getTime() + ISHIHARA_SESSION_DURATION * 60000);
+  
+  console.log(`🔍 === TRAINER BUSY CHECK ===`);
+  console.log(`🕐 Checking slot: ${slotTime.toISOString()} - ${slotEndTime.toISOString()}`);
+  console.log(`📋 Total Ishihara bookings: ${ishiharaBookings.length}`);
   
   return ishiharaBookings.some(booking => {
     const bookingStart = new Date(booking.start);
     const bookingEnd = new Date(booking.end);
-    // Check for any overlap between the potential slot and existing bookings
-    return slotTime < bookingEnd && slotEndTime > bookingStart;
+    const hasOverlap = slotTime < bookingEnd && slotEndTime > bookingStart;
+    
+    if (!hasOverlap) {
+      return false;
+    }
+    
+    console.log(`⚠️  OVERLAPPING: "${booking.title}" ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
+    
+    // 🚀 SPECIAL HANDLING: Check if this is a TOPFORM hold without actual work booking
+    const title = booking.title || '';
+    const isTOPFORMBooking = isTOPFORMIshiharaBooking(title);
+    
+    if (isTOPFORMBooking) {
+      console.log(`🎯 TOPFORM booking detected: "${title}"`);
+      
+      // Check if Ishihara has actual work calendar booking at the same time
+      const workBookings = allBookings.ishihara.filter(b => b.source === 'work');
+      const hasRealWorkBooking = workBookings.some(workBooking => {
+        const workStart = new Date(workBooking.start);
+        const workEnd = new Date(workBooking.end);
+        const workOverlap = bookingStart < workEnd && bookingEnd > workStart;
+        
+        if (workOverlap) {
+          console.log(`💼 Real work booking found: "${workBooking.title}" ${workStart.toISOString()} - ${workEnd.toISOString()}`);
+        }
+        return workOverlap;
+      });
+      
+      if (!hasRealWorkBooking) {
+        console.log(`✅ TOPFORM booking without real work booking - IGNORING for trainer busy check`);
+        return false; // Don't count TOPFORM booking as "busy" if no real work booking
+      } else {
+        console.log(`❌ TOPFORM booking has real work booking - counting as busy`);
+        return true;
+      }
+    }
+    
+    // Regular booking - count as busy
+    console.log(`📅 Regular booking - counting as busy`);
+    return true;
   });
 };
 
 // 2. Check for travel time conflicts
-const hasTravelConflict = (slotTime: Date, store: 'ebisu' | 'hanzoomon', ishiharaBookings: Booking[]): boolean => {
+const hasTravelConflict = (
+  slotTime: Date, 
+  store: 'ebisu' | 'hanzoomon', 
+  ishiharaBookings: Booking[],
+  allBookings: BookingData,
+  topformHoldSettings: Record<string, boolean> = {}
+): boolean => {
   const travelWindowStart = new Date(slotTime.getTime() - TRAVEL_TIME * 60000);
   const travelWindowEnd = new Date(slotTime.getTime() + (ISHIHARA_SESSION_DURATION + TRAVEL_TIME) * 60000);
+
+  console.log(`🚗 === TRAVEL CONFLICT CHECK ===`);
+  console.log(`🕐 Travel window: ${travelWindowStart.toISOString()} - ${travelWindowEnd.toISOString()}`);
+  console.log(`🏪 Target store: ${store}`);
 
   return ishiharaBookings.some(booking => {
     if (booking.store === store) {
       return false; // No travel conflict if it's in the same store
     }
+    
     const bookingStart = new Date(booking.start);
     const bookingEnd = new Date(booking.end);
-    // Check if any booking at the *other* store falls within the travel window
-    return bookingStart < travelWindowEnd && bookingEnd > travelWindowStart;
+    const hasOverlap = bookingStart < travelWindowEnd && bookingEnd > travelWindowStart;
+    
+    if (!hasOverlap) {
+      return false;
+    }
+    
+    console.log(`⚠️  POTENTIAL TRAVEL CONFLICT: "${booking.title}" at ${booking.store} ${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`);
+    
+    // 🚀 SPECIAL HANDLING: Check if this is a TOPFORM hold without actual work booking
+    const title = booking.title || '';
+    const isTOPFORMBooking = isTOPFORMIshiharaBooking(title);
+    
+    if (isTOPFORMBooking) {
+      console.log(`🎯 TOPFORM booking detected for travel conflict: "${title}"`);
+      
+      // Check if Ishihara has actual work calendar booking at the same time
+      const workBookings = allBookings.ishihara.filter(b => b.source === 'work');
+      const hasRealWorkBooking = workBookings.some(workBooking => {
+        const workStart = new Date(workBooking.start);
+        const workEnd = new Date(workBooking.end);
+        const workOverlap = bookingStart < workEnd && bookingEnd > workStart;
+        return workOverlap;
+      });
+      
+      if (!hasRealWorkBooking) {
+        console.log(`✅ TOPFORM booking without real work booking - IGNORING for travel conflict`);
+        return false; // Don't count TOPFORM booking as travel conflict if no real work booking
+      } else {
+        console.log(`❌ TOPFORM booking has real work booking - counting as travel conflict`);
+        return true;
+      }
+    }
+    
+    // Regular booking at different store - count as travel conflict
+    console.log(`🚗 Travel conflict detected with regular booking`);
+    return true;
   });
 };
 
@@ -79,23 +199,8 @@ const isTOPFORMIshiharaHold = (
   console.log(`📏 Length: ${title.length}`);
   console.log(`🔤 Character codes:`, title.split('').map(c => `${c}(${c.charCodeAt(0)})`).join(' '));
   
-  // 🎯 Multiple detection patterns (ultra-robust)
-  const patterns = [
-    // Pattern 1: Exact match
-    title.includes('TOPFORM') && title.includes('石原') && title.includes('淳哉'),
-    // Pattern 2: Regex with whitespace tolerance  
-    /TOPFORM.*石原.*淳哉/.test(title),
-    // Pattern 3: Individual components
-    title.includes('TOPFORM') && title.includes('石原 淳哉'),
-    // Pattern 4: Partial match for safety
-    title.includes('TOPFORM') && title.includes('石原'),
-    // Pattern 5: Emergency fallback - booking ID or room pattern
-    (booking.id && booking.id.includes('topform')) || title.toLowerCase().includes('topform')
-  ];
-  
-  console.log(`🎯 Detection patterns:`, patterns.map((p, i) => `${i+1}:${p}`));
-  
-  const isDetected = patterns.some(p => p);
+  // 🎯 Use unified TOPFORM detection function
+  const isDetected = isTOPFORMIshiharaBooking(title);
   console.log(`🚀 TOPFORM Hold detected: ${isDetected}`);
   
   if (!isDetected) {
@@ -319,11 +424,11 @@ export const checkAvailability = (
     return true;
   });
 
-  if (isTrainerBusy(slotTime, filteredIshiharaBookings)) {
+  if (isTrainerBusy(slotTime, filteredIshiharaBookings, allBookings, topformHoldSettings)) {
     return { isAvailable: false, reason: 'trainer_busy' };
   }
 
-  if (hasTravelConflict(slotTime, store, filteredIshiharaBookings)) {
+  if (hasTravelConflict(slotTime, store, filteredIshiharaBookings, allBookings, topformHoldSettings)) {
     return { isAvailable: false, reason: 'travel_conflict' };
   }
 
