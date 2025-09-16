@@ -21,11 +21,15 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   const [displayDate, setDisplayDate] = useState(currentDate);
   const [privateEventSettings, setPrivateEventSettings] = useState<Record<string, boolean>>({});
   const [topformHoldSettings, setTopformHoldSettings] = useState<Record<string, boolean>>({});
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   // プライベート予定設定とTOPFORM枠抑え設定を取得
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        console.log('🔄 Fetching event settings...');
+        setSettingsLoaded(false);
+        
         const [privateResponse, topformResponse] = await Promise.all([
           fetch('/api/private-events'),
           fetch('/api/topform-holds')
@@ -34,14 +38,20 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
         if (privateResponse.ok) {
           const privateData = await privateResponse.json();
           setPrivateEventSettings(privateData.settings || {});
+          console.log('✅ Private event settings loaded:', Object.keys(privateData.settings || {}).length, 'items');
         }
         
         if (topformResponse.ok) {
           const topformData = await topformResponse.json();
           setTopformHoldSettings(topformData.settings || {});
+          console.log('✅ TOPFORM hold settings loaded:', Object.keys(topformData.settings || {}).length, 'items');
         }
+        
+        setSettingsLoaded(true);
+        console.log('🎯 All event settings loaded successfully');
       } catch (error) {
         console.error('Failed to fetch event settings:', error);
+        setSettingsLoaded(true); // Still allow rendering with default settings
       }
     };
     
@@ -341,11 +351,15 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                   ? selectedSlot?.date.toISOString().split('T')[0] === dateStr && selectedSlot?.time === time
                   : selectedCells.some(cell => cell.date === dateStr && cell.time === time && cell.store === selectedStore);
                 
-                // 予約可能性をチェック
+                // 予約可能性をチェック（設定が読み込まれてから）
                 const [hour, minute] = time.split(':').map(Number);
                 const slotTime = new Date(day);
                 slotTime.setHours(hour, minute, 0, 0);
-                const availabilityResult = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings, topformHoldSettings);
+                
+                // 設定が読み込まれていない場合は、デフォルトで利用不可とする
+                const availabilityResult = settingsLoaded 
+                  ? checkAvailability(slotTime, selectedStore, bookings, privateEventSettings, topformHoldSettings)
+                  : { isAvailable: false, reason: 'unavailable_block' as const };
                 
                 return (
                   <TimeSlot 

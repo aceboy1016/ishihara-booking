@@ -254,14 +254,18 @@ const isTOPFORMIshiharaHold = (
   const hasRealIshiharaBooking = overlappingBookings.length > 0;
   console.log(`📊 Overlapping work bookings: ${overlappingBookings.length}`);
   
-  // 🚀 FORCE IGNORE TOPFORM HOLDS (emergency fix)
-  // TOPFORM holds should ALWAYS be ignored for booking availability
-  const shouldIgnore = true;  // Force ignore all TOPFORM holds
+  // 🎯 SMART LOGIC: Only ignore TOPFORM holds when there's no real work booking
+  const shouldIgnore = !hasRealIshiharaBooking;
   
   console.log(`🎯 DECISION: Hold "${title}"`);
-  console.log(`   - hasRealBooking: ${hasRealIshiharaBooking}`);
-  console.log(`   - shouldIgnore: ${shouldIgnore} (FORCED)`);
-  console.log(`🚀 TOPFORM Hold will be IGNORED for availability check`);
+  console.log(`   - hasRealWorkBooking: ${hasRealIshiharaBooking}`);
+  console.log(`   - shouldIgnore: ${shouldIgnore} ${shouldIgnore ? '(No real booking - IGNORE)' : '(Has real booking - RESPECT)'}`);
+  
+  if (shouldIgnore) {
+    console.log(`✅ TOPFORM Hold WITHOUT real work booking - IGNORING for availability`);
+  } else {
+    console.log(`❌ TOPFORM Hold WITH real work booking - RESPECTING (unavailable)`);
+  }
   
   return shouldIgnore;
 };
