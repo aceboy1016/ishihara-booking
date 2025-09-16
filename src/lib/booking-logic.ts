@@ -139,7 +139,17 @@ const hasTravelConflict = (
   console.log(`🏪 Target store: ${store}`);
 
   return ishiharaBookings.some(booking => {
+    console.log(`🔍 Checking booking: "${booking.title}" store="${booking.store}" vs target="${store}"`);
+    
+    // 🚀 CRITICAL FIX: If booking doesn't have store info, it's likely a personal/work calendar event
+    // These should NOT cause travel conflicts since they don't specify a location
+    if (!booking.store) {
+      console.log(`📅 No store specified - likely personal/work calendar event, ignoring for travel conflict`);
+      return false;
+    }
+    
     if (booking.store === store) {
+      console.log(`✅ Same store (${store}) - no travel conflict`);
       return false; // No travel conflict if it's in the same store
     }
     
@@ -148,6 +158,7 @@ const hasTravelConflict = (
     const hasOverlap = bookingStart < travelWindowEnd && bookingEnd > travelWindowStart;
     
     if (!hasOverlap) {
+      console.log(`⏰ No time overlap - no travel conflict`);
       return false;
     }
     
