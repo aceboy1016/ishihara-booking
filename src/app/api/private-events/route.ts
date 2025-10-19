@@ -1,34 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 interface EventSetting {
   eventId: string;
   isBlocked: boolean;
 }
 
-const SETTINGS_FILE = path.join(process.cwd(), 'data', 'private-event-settings.json');
-
-// 設定ファイルが存在することを確認し、なければ作成
-const ensureSettingsFile = () => {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  if (!fs.existsSync(SETTINGS_FILE)) {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ settings: {} }));
-  }
-};
+const SETTINGS_KEY = 'private-event-settings';
 
 export async function GET() {
   try {
-    ensureSettingsFile();
-    const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-    const settings = JSON.parse(data);
-    
-    return NextResponse.json(settings);
+    const settings = await kv.get(SETTINGS_KEY);
+    return NextResponse.json(settings || { settings: {} });
   } catch (error) {
     console.error('Failed to read private event settings:', error);
+    // エラーが発生した場合でも、フロントエンドが壊れないように空の設定を返す
     return NextResponse.json({ settings: {} }, { status: 200 });
   }
 }
@@ -44,18 +30,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    ensureSettingsFile();
-    
-    // 現在の設定を読み込み
-    const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-    const currentSettings = JSON.parse(data);
+    // 現在の設定を読み込み (存在しない場合は空のオブジェクト)
+    const currentSettings: { settings: Record<string, boolean> } = await kv.get(SETTINGS_KEY) || { settings: {} };
     
     // 設定を更新
     currentSettings.settings[eventId] = isBlocked;
     
-    // ファイルに保存
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings, null, 2));
-    
+    // KVに保存
+    await kv.set(SETTINGS_KEY, currentSettings);
+
     return NextResponse.json({ success: true, settings: currentSettings.settings });
   } catch (error) {
     console.error('Failed to save private event setting:', error);
@@ -69,8 +52,7 @@ export async function POST(request: NextRequest) {
 // 設定をリセット（開発用）
 export async function DELETE() {
   try {
-    ensureSettingsFile();
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ settings: {} }));
+    await kv.del(SETTINGS_KEY);
     return NextResponse.json({ success: true, message: 'All settings cleared' });
   } catch (error) {
     console.error('Failed to clear private event settings:', error);
