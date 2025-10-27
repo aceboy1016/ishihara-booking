@@ -102,42 +102,48 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
     }
   };
 
-  // Gistに設定を保存
+  // 設定を共有URLとして保存
   const saveToGist = async () => {
     setLoading(true);
     try {
       const url = await GistStorage.saveSettings({ settings: savedSettings });
       setGistUrl(url);
-      alert(`設定をGistに保存しました！\nURL: ${url}\n\nこのURLを保存して、他のデバイスで読み込めます。`);
+      // クリップボードにコピー
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        alert(`設定を共有URLとして保存しました！\nURLがクリップボードにコピーされました。\n\nこのURLをブックマークまたは他のデバイスで使用してください。`);
+      } else {
+        alert(`設定を共有URLとして保存しました！\nURL: ${url}\n\nこのURLをブックマークまたは他のデバイスで使用してください。`);
+      }
     } catch (error) {
-      alert('Gistへの保存に失敗しました');
+      alert('共有URLの生成に失敗しました');
     } finally {
       setLoading(false);
     }
   };
 
-  // Gistから設定を読み込み
+  // 共有URLから設定を読み込み
   const loadFromGist = async () => {
     if (!gistUrl.trim()) {
-      alert('Gist URLを入力してください');
+      alert('共有URLを入力してください');
       return;
     }
 
-    const gistId = GistStorage.extractGistId(gistUrl);
-    if (!gistId) {
-      alert('正しいGist URLを入力してください');
+    const isValid = GistStorage.extractGistId(gistUrl);
+    if (!isValid) {
+      alert('正しい共有URLを入力してください');
       return;
     }
 
     setLoading(true);
     try {
-      const settings = await GistStorage.loadSettings(gistId);
+      const settings = await GistStorage.loadSettings(gistUrl);
       setSavedSettings(settings.settings);
       localStorage.setItem('private-event-settings', JSON.stringify(settings.settings));
-      alert('Gistから設定を読み込みました！');
+      alert('共有URLから設定を読み込みました！');
       onRefresh();
     } catch (error) {
-      alert('Gistからの読み込みに失敗しました');
+      alert('共有URLからの読み込みに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -196,13 +202,13 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
             disabled={loading}
             className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading ? '保存中...' : 'Gistに保存'}
+            {loading ? '生成中...' : '共有URLを生成'}
           </button>
           <button
             onClick={() => setShowGistInput(!showGistInput)}
             className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
           >
-            Gistから読み込み
+            URLから読み込み
           </button>
         </div>
 
@@ -212,7 +218,7 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
               type="text"
               value={gistUrl}
               onChange={(e) => setGistUrl(e.target.value)}
-              placeholder="Gist URLを入力..."
+              placeholder="共有URLを入力..."
               className="w-full px-2 py-1 text-xs border rounded"
             />
             <button
@@ -228,7 +234,7 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
         <div className="text-xs text-gray-500">
           <p>• ブロック: この時間帯は予約不可として表示</p>
           <p>• 無視: この予定は予約可能性の判定に影響しない</p>
-          <p>• Gist保存で他のデバイスと設定を共有可能</p>
+          <p>• 共有URLで他のデバイスと設定を同期可能</p>
         </div>
       </div>
     </div>

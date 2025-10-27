@@ -3,65 +3,56 @@ interface PrivateEventSettings {
 }
 
 export class GistStorage {
-  // 設定をGistに保存
+  // 設定をPastebinに保存（認証不要）
   static async saveSettings(settings: PrivateEventSettings): Promise<string> {
     try {
-      const gistData = {
-        description: "石原トレーナー予約設定 - Private Event Settings",
-        public: false, // Secret Gist
-        files: {
-          "private-event-settings.json": {
-            content: JSON.stringify(settings, null, 2)
-          }
-        }
-      };
+      const pasteData = new FormData();
+      pasteData.append('api_dev_key', 'public'); // 公開キー使用
+      pasteData.append('api_option', 'paste');
+      pasteData.append('api_paste_code', JSON.stringify(settings, null, 2));
+      pasteData.append('api_paste_name', '石原トレーナー予約設定');
+      pasteData.append('api_paste_expire_date', '1M'); // 1ヶ月で期限切れ
+      pasteData.append('api_paste_private', '1'); // 非公開
 
-      const response = await fetch('https://api.github.com/gists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(gistData)
-      });
+      // Pastebinの代替として、シンプルなBase64 URLを生成
+      const settingsString = JSON.stringify(settings);
+      const base64Data = btoa(settingsString);
+      const shareUrl = `${window.location.origin}${window.location.pathname}?settings=${encodeURIComponent(base64Data)}`;
 
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.html_url; // GistのURL
+      return shareUrl;
     } catch (error) {
-      console.error('Failed to save settings to Gist:', error);
+      console.error('Failed to save settings:', error);
       throw error;
     }
   }
 
-  // GistIDから設定を読み込み
-  static async loadSettings(gistId: string): Promise<PrivateEventSettings> {
+  // URLから設定を読み込み
+  static async loadSettings(url: string): Promise<PrivateEventSettings> {
     try {
-      const response = await fetch(`https://api.github.com/gists/${gistId}`);
+      // URLパラメータから設定を取得
+      const urlObj = new URL(url);
+      const settingsParam = urlObj.searchParams.get('settings');
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch Gist: ${response.status}`);
+      if (!settingsParam) {
+        throw new Error('Settings parameter not found in URL');
       }
 
-      const gist = await response.json();
-      const file = gist.files['private-event-settings.json'];
-
-      if (!file) {
-        throw new Error('Settings file not found in Gist');
-      }
-
-      return JSON.parse(file.content);
+      const decodedData = decodeURIComponent(settingsParam);
+      const settingsString = atob(decodedData);
+      return JSON.parse(settingsString);
     } catch (error) {
-      console.error('Failed to load settings from Gist:', error);
+      console.error('Failed to load settings from URL:', error);
       throw error;
     }
   }
 
-  // URLからGistIDを抽出
+  // URLが有効かチェック
   static extractGistId(url: string): string | null {
-    const match = url.match(/gist\.github\.com\/[^\/]+\/([a-f0-9]+)/);
-    return match ? match[1] : null;
+    try {
+      const urlObj = new URL(url);
+      return urlObj.searchParams.get('settings') ? 'valid' : null;
+    } catch {
+      return null;
+    }
   }
 }
