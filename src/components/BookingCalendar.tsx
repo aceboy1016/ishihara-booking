@@ -339,7 +339,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
           gridTemplateColumns: `60px repeat(${days.length}, minmax(45px, 1fr))`
         }}>
           {/* Time column header */}
-          <div className="sticky top-0 left-0 z-30 py-1 px-1 text-xs font-semibold text-center bg-white border-b border-r text-black">時間</div>
+          <div className="sticky top-0 left-0 z-30 py-2 px-1 text-sm font-bold text-center bg-white border-b border-r text-black">時間</div>
           
           {/* Date headers */}
           {days.filter(day => day >= todayDateOnly).map(day => {
@@ -353,8 +353,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
             if (dayOfWeek === 6) dayColor = 'text-blue-600'; // 土曜日
             
             return (
-              <div key={day.toISOString()} className="sticky top-0 z-20 py-1 px-1 text-center bg-white border-b whitespace-nowrap">
-                <div className="text-xs font-semibold text-black">{`${day.getMonth() + 1}/${day.getDate()}`}</div>
+              <div key={day.toISOString()} className="sticky top-0 z-20 py-2 px-1 text-center bg-white border-b whitespace-nowrap">
+                <div className="text-sm font-bold text-black mb-1">{`${day.getMonth() + 1}/${day.getDate()}`}</div>
                 <div className={`text-xs font-semibold ${dayColor}`}>{dayNames[dayOfWeek]}</div>
               </div>
             );
@@ -364,7 +364,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
           {timeLabels.map(time => (
             <React.Fragment key={time}>
               {/* Time label row */}
-              <div className="sticky left-0 z-20 py-1 px-1 text-xs text-center bg-white border-b border-r whitespace-nowrap font-medium text-black">{time}</div>
+              <div className="sticky left-0 z-20 py-2 px-1 text-sm text-center bg-white border-b border-r whitespace-nowrap font-semibold text-black">{time}</div>
               {/* TimeSlot components */}
               {days.filter(day => day >= todayDateOnly).map(day => {
                 const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
