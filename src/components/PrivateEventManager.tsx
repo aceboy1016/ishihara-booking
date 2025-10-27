@@ -28,20 +28,16 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
   const [loading, setLoading] = useState(false);
   const [savedSettings, setSavedSettings] = useState<Record<string, boolean>>({});
 
-  // 保存された設定を取得
+  // 保存された設定を取得（localStorage使用）
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch('/api/private-events');
-        if (response.ok) {
-          const data = await response.json();
-          setSavedSettings(data.settings || {});
-        }
-      } catch (error) {
-        console.error('Failed to fetch settings:', error);
+    try {
+      const saved = localStorage.getItem('private-event-settings');
+      if (saved) {
+        setSavedSettings(JSON.parse(saved));
       }
-    };
-    fetchSettings();
+    } catch (error) {
+      console.error('Failed to load settings from localStorage:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -71,41 +67,30 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
     try {
       const event = privateEvents.find(e => e.id === eventId);
       if (!event) return;
-      
+
       const newIsBlocked = !event.isBlocked;
-      
-      // API呼び出しで設定を保存
-      const response = await fetch('/api/private-events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventId,
-          isBlocked: newIsBlocked,
-        }),
-      });
-      
-      if (response.ok) {
-        // 成功した場合のみローカル状態を更新
-        setSavedSettings(prev => ({
-          ...prev,
-          [eventId]: newIsBlocked
-        }));
-        
-        setPrivateEvents(prev => 
-          prev.map(event => 
-            event.id === eventId 
-              ? { ...event, isBlocked: newIsBlocked }
-              : event
-          )
-        );
-        
-        // データを再取得
-        onRefresh();
-      } else {
-        throw new Error('Failed to save setting');
-      }
+
+      // localStorageに設定を保存
+      const newSettings = {
+        ...savedSettings,
+        [eventId]: newIsBlocked
+      };
+
+      localStorage.setItem('private-event-settings', JSON.stringify(newSettings));
+
+      // ローカル状態を更新
+      setSavedSettings(newSettings);
+
+      setPrivateEvents(prev =>
+        prev.map(event =>
+          event.id === eventId
+            ? { ...event, isBlocked: newIsBlocked }
+            : event
+        )
+      );
+
+      // データを再取得
+      onRefresh();
     } catch (error) {
       console.error('Failed to update event status:', error);
       alert('設定の保存に失敗しました');

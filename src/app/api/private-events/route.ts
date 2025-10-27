@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
 interface EventSetting {
   eventId: string;
   isBlocked: boolean;
 }
 
-// Vercelでは永続化された設定保存が困難なため、
-// 一時的にセッション内でのメモリベース保存を使用
-let memoryStore: { settings: Record<string, boolean> } = { settings: {} };
+const SETTINGS_KEY = 'private-event-settings';
 
 export async function GET() {
   try {
-    return NextResponse.json(memoryStore);
+    const settings = await kv.get(SETTINGS_KEY);
+    return NextResponse.json(settings || { settings: {} });
   } catch (error) {
     console.error('Failed to read private event settings:', error);
     return NextResponse.json({ settings: {} }, { status: 200 });
@@ -29,10 +29,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 設定を更新
-    memoryStore.settings[eventId] = isBlocked;
+    // 現在の設定を読み込み (存在しない場合は空のオブジェクト)
+    const currentSettings: { settings: Record<string, boolean> } = await kv.get(SETTINGS_KEY) || { settings: {} };
 
-    return NextResponse.json({ success: true, settings: memoryStore.settings });
+    // 設定を更新
+    currentSettings.settings[eventId] = isBlocked;
+
+    // KVに保存
+    await kv.set(SETTINGS_KEY, currentSettings);
+
+    return NextResponse.json({ success: true, settings: currentSettings.settings });
   } catch (error) {
     console.error('Failed to save private event setting:', error);
     return NextResponse.json(
@@ -45,7 +51,7 @@ export async function POST(request: NextRequest) {
 // 設定をリセット（開発用）
 export async function DELETE() {
   try {
-    memoryStore = { settings: {} };
+    await kv.del(SETTINGS_KEY);
     return NextResponse.json({ success: true, message: 'All settings cleared' });
   } catch (error) {
     console.error('Failed to clear private event settings:', error);
