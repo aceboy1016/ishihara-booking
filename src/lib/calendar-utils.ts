@@ -74,9 +74,9 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   const calendar = getCalendarClient();
   const now = new Date();
 
-  // 3ヶ月前から開始（過去の予約も含める）
-  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-  const timeMin = threeMonthsAgo.toISOString();
+  // 今日の00:00:00から開始（確実に今日以降のデータを取得）
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const timeMin = today.toISOString();
   const timeMax = new Date(now.getTime() + (61 * 24 * 60 * 60 * 1000)).toISOString(); // 61 days from now
 
   // Fetch all calendars in parallel
