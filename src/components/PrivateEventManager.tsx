@@ -84,6 +84,9 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
       // ローカル状態を更新
       setSavedSettings(newSettings);
 
+      // カスタムイベントを発火してカレンダーに設定変更を通知
+      window.dispatchEvent(new Event('private-settings-changed'));
+
       setPrivateEvents(prev =>
         prev.map(event =>
           event.id === eventId
@@ -140,6 +143,10 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
       const settings = await GistStorage.loadSettings(gistUrl);
       setSavedSettings(settings.settings);
       localStorage.setItem('private-event-settings', JSON.stringify(settings.settings));
+
+      // カスタムイベントを発火してカレンダーに設定変更を通知
+      window.dispatchEvent(new Event('private-settings-changed'));
+
       alert('共有URLから設定を読み込みました！');
       onRefresh();
     } catch (error) {

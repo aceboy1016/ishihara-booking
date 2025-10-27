@@ -27,35 +27,56 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        console.log('🔄 Fetching event settings...');
+        console.log('🔄 Loading event settings...');
         setSettingsLoaded(false);
-        
-        const [privateResponse, topformResponse] = await Promise.all([
-          fetch('/api/private-events'),
-          fetch('/api/topform-holds')
-        ]);
-        
-        if (privateResponse.ok) {
-          const privateData = await privateResponse.json();
-          setPrivateEventSettings(privateData.settings || {});
-          console.log('✅ Private event settings loaded:', Object.keys(privateData.settings || {}).length, 'items');
+
+        // localStorageからプライベート予定設定を読み込み
+        try {
+          const saved = localStorage.getItem('private-event-settings');
+          if (saved) {
+            const parsedSettings = JSON.parse(saved);
+            setPrivateEventSettings(parsedSettings);
+            console.log('✅ Private event settings loaded from localStorage:', Object.keys(parsedSettings).length, 'items');
+          }
+        } catch (error) {
+          console.error('Failed to load private event settings from localStorage:', error);
         }
-        
-        if (topformResponse.ok) {
-          const topformData = await topformResponse.json();
-          setTopformHoldSettings(topformData.settings || {});
-          console.log('✅ TOPFORM hold settings loaded:', Object.keys(topformData.settings || {}).length, 'items');
+
+        // TOPFORM設定はAPIから取得（こちらは変更なし）
+        try {
+          const topformResponse = await fetch('/api/topform-holds');
+          if (topformResponse.ok) {
+            const topformData = await topformResponse.json();
+            setTopformHoldSettings(topformData.settings || {});
+            console.log('✅ TOPFORM hold settings loaded:', Object.keys(topformData.settings || {}).length, 'items');
+          }
+        } catch (error) {
+          console.error('Failed to fetch TOPFORM settings:', error);
         }
-        
+
         setSettingsLoaded(true);
         console.log('🎯 All event settings loaded successfully');
       } catch (error) {
-        console.error('Failed to fetch event settings:', error);
+        console.error('Failed to load event settings:', error);
         setSettingsLoaded(true); // Still allow rendering with default settings
       }
     };
-    
+
     fetchSettings();
+
+    // localStorageの変更を監視
+    const handleStorageChange = () => {
+      fetchSettings();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // 同一タブ内でのlocalStorage変更も監視
+    window.addEventListener('private-settings-changed', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('private-settings-changed', handleStorageChange);
+    };
   }, [bookings]); // bookingsが変更されたときに設定も再取得
 
   // 現在日から2ヶ月先までの期間設定
