@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { GistStorage } from '../utils/gistStorage';
 
 interface PrivateEvent {
   id: string;
@@ -27,6 +28,8 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [savedSettings, setSavedSettings] = useState<Record<string, boolean>>({});
+  const [gistUrl, setGistUrl] = useState<string>('');
+  const [showGistInput, setShowGistInput] = useState(false);
 
   // 保存された設定を取得（localStorage使用）
   useEffect(() => {
@@ -99,6 +102,47 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
     }
   };
 
+  // Gistに設定を保存
+  const saveToGist = async () => {
+    setLoading(true);
+    try {
+      const url = await GistStorage.saveSettings({ settings: savedSettings });
+      setGistUrl(url);
+      alert(`設定をGistに保存しました！\nURL: ${url}\n\nこのURLを保存して、他のデバイスで読み込めます。`);
+    } catch (error) {
+      alert('Gistへの保存に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gistから設定を読み込み
+  const loadFromGist = async () => {
+    if (!gistUrl.trim()) {
+      alert('Gist URLを入力してください');
+      return;
+    }
+
+    const gistId = GistStorage.extractGistId(gistUrl);
+    if (!gistId) {
+      alert('正しいGist URLを入力してください');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const settings = await GistStorage.loadSettings(gistId);
+      setSavedSettings(settings.settings);
+      localStorage.setItem('private-event-settings', JSON.stringify(settings.settings));
+      alert('Gistから設定を読み込みました！');
+      onRefresh();
+    } catch (error) {
+      alert('Gistからの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (privateEvents.length === 0) {
     return (
       <div className="bg-gray-50 p-4 rounded-lg border">
@@ -143,9 +187,49 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
           </div>
         ))}
       </div>
-      <div className="mt-3 text-xs text-gray-500">
-        <p>• ブロック: この時間帯は予約不可として表示</p>
-        <p>• 無視: この予定は予約可能性の判定に影響しない</p>
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <h4 className="text-sm font-medium text-gray-800 mb-3">設定の保存・共有</h4>
+
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={saveToGist}
+            disabled={loading}
+            className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? '保存中...' : 'Gistに保存'}
+          </button>
+          <button
+            onClick={() => setShowGistInput(!showGistInput)}
+            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+          >
+            Gistから読み込み
+          </button>
+        </div>
+
+        {showGistInput && (
+          <div className="mb-3">
+            <input
+              type="text"
+              value={gistUrl}
+              onChange={(e) => setGistUrl(e.target.value)}
+              placeholder="Gist URLを入力..."
+              className="w-full px-2 py-1 text-xs border rounded"
+            />
+            <button
+              onClick={loadFromGist}
+              disabled={loading}
+              className="mt-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
+            >
+              {loading ? '読み込み中...' : '読み込み'}
+            </button>
+          </div>
+        )}
+
+        <div className="text-xs text-gray-500">
+          <p>• ブロック: この時間帯は予約不可として表示</p>
+          <p>• 無視: この予定は予約可能性の判定に影響しない</p>
+          <p>• Gist保存で他のデバイスと設定を共有可能</p>
+        </div>
       </div>
     </div>
   );
