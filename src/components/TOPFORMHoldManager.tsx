@@ -45,20 +45,16 @@ const TOPFORMHoldManager: React.FC<TOPFORMHoldManagerProps> = ({ bookingData, on
   const [loading, setLoading] = useState(false);
   const [savedSettings, setSavedSettings] = useState<Record<string, boolean>>({});
 
-  // 保存された設定を取得
+  // 保存された設定を取得（localStorage使用）
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch('/api/topform-holds');
-        if (response.ok) {
-          const data = await response.json();
-          setSavedSettings(data.settings || {});
-        }
-      } catch (error) {
-        console.error('Failed to fetch TOPFORM hold settings:', error);
+    try {
+      const saved = localStorage.getItem('topform-hold-settings');
+      if (saved) {
+        setSavedSettings(JSON.parse(saved));
       }
-    };
-    fetchSettings();
+    } catch (error) {
+      console.error('Failed to load TOPFORM hold settings from localStorage:', error);
+    }
   }, []);
 
   // TOPFORM枠抑え予定を抽出・分析
@@ -125,41 +121,33 @@ const TOPFORMHoldManager: React.FC<TOPFORMHoldManagerProps> = ({ bookingData, on
     try {
       const event = topformHolds.find(e => e.id === eventId);
       if (!event) return;
-      
+
       const newIsIgnored = !event.isIgnored;
-      
-      // API呼び出しで設定を保存
-      const response = await fetch('/api/topform-holds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventId,
-          isIgnored: newIsIgnored,
-        }),
-      });
-      
-      if (response.ok) {
-        // 成功した場合のみローカル状態を更新
-        setSavedSettings(prev => ({
-          ...prev,
-          [eventId]: newIsIgnored
-        }));
-        
-        setTopformHolds(prev => 
-          prev.map(event => 
-            event.id === eventId 
-              ? { ...event, isIgnored: newIsIgnored }
-              : event
-          )
-        );
-        
-        // データを再取得
-        onRefresh();
-      } else {
-        throw new Error('Failed to save setting');
-      }
+
+      // localStorageに設定を保存
+      const newSettings = {
+        ...savedSettings,
+        [eventId]: newIsIgnored
+      };
+
+      localStorage.setItem('topform-hold-settings', JSON.stringify(newSettings));
+
+      // ローカル状態を更新
+      setSavedSettings(newSettings);
+
+      // カスタムイベントを発火してカレンダーに設定変更を通知
+      window.dispatchEvent(new Event('topform-settings-changed'));
+
+      setTopformHolds(prev =>
+        prev.map(event =>
+          event.id === eventId
+            ? { ...event, isIgnored: newIsIgnored }
+            : event
+        )
+      );
+
+      // データを再取得
+      onRefresh();
     } catch (error) {
       console.error('Failed to update TOPFORM hold status:', error);
       alert('設定の保存に失敗しました');

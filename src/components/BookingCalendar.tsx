@@ -42,16 +42,16 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
           console.error('Failed to load private event settings from localStorage:', error);
         }
 
-        // TOPFORM設定はAPIから取得（こちらは変更なし）
+        // localStorageからTOPFORM枠抑え設定を読み込み
         try {
-          const topformResponse = await fetch('/api/topform-holds');
-          if (topformResponse.ok) {
-            const topformData = await topformResponse.json();
-            setTopformHoldSettings(topformData.settings || {});
-            console.log('✅ TOPFORM hold settings loaded:', Object.keys(topformData.settings || {}).length, 'items');
+          const savedTopform = localStorage.getItem('topform-hold-settings');
+          if (savedTopform) {
+            const parsedTopformSettings = JSON.parse(savedTopform);
+            setTopformHoldSettings(parsedTopformSettings);
+            console.log('✅ TOPFORM hold settings loaded from localStorage:', Object.keys(parsedTopformSettings).length, 'items');
           }
         } catch (error) {
-          console.error('Failed to fetch TOPFORM settings:', error);
+          console.error('Failed to load TOPFORM hold settings from localStorage:', error);
         }
 
         setSettingsLoaded(true);
@@ -72,10 +72,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
     window.addEventListener('storage', handleStorageChange);
     // 同一タブ内でのlocalStorage変更も監視
     window.addEventListener('private-settings-changed', handleStorageChange);
+    window.addEventListener('topform-settings-changed', handleStorageChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('private-settings-changed', handleStorageChange);
+      window.removeEventListener('topform-settings-changed', handleStorageChange);
     };
   }, [bookings]); // bookingsが変更されたときに設定も再取得
 
@@ -383,7 +385,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                   : { isAvailable: false, reason: 'unavailable_block' as const };
                 
                 return (
-                  <TimeSlot 
+                  <TimeSlot
                     key={day.toISOString()}
                     date={day}
                     time={time}
@@ -393,6 +395,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ selectedStore, curren
                     onClick={() => handleSlotClick(day, time, availabilityResult.isAvailable)}
                     isSelected={isSelected}
                     privateEventSettings={privateEventSettings}
+                    topformHoldSettings={topformHoldSettings}
                   />
                 );
               })}

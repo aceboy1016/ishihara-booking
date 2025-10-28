@@ -55,16 +55,56 @@ const getCalendarClient = () => {
 // Function to fetch events from a single calendar
 const fetchEvents = async (calendar: ReturnType<typeof google.calendar>, calendarId: string, timeMin: string, timeMax: string): Promise<calendar_v3.Schema$Event[]> => {
   try {
+    console.log(`🔍 Fetching events for calendar: ${calendarId}`);
+    console.log(`   - Range: ${timeMin} to ${timeMax}`);
+
     const res = await calendar.events.list({
       calendarId,
       timeMin,
       timeMax,
       singleEvents: true,
       orderBy: 'startTime',
+      maxResults: 2500, // Increase limit to ensure we get all events
     });
+
+    const eventCount = res.data.items?.length || 0;
+    console.log(`✅ Successfully fetched ${eventCount} events from ${calendarId}`);
+
+    if (calendarId === 'ebisu@topform.jp' && eventCount > 0) {
+      console.log(`📋 Sample events from ebisu calendar:`);
+      res.data.items?.slice(0, 5).forEach((event, index) => {
+        const title = event.summary || 'No title';
+        const startTime = event.start?.dateTime || event.start?.date || 'No time';
+        console.log(`   ${index + 1}. "${title}" at ${startTime}`);
+      });
+
+      // 11/16以降のイベントを特に確認
+      const nov16AndLater = res.data.items?.filter(event => {
+        const startTime = event.start?.dateTime || event.start?.date;
+        return startTime && startTime >= '2025-11-16';
+      });
+      console.log(`📅 Events from Nov 16 onwards: ${nov16AndLater?.length || 0}`);
+
+      // 山副さんの予約を特に確認
+      const yamazoeEvents = res.data.items?.filter(event =>
+        event.summary?.includes('山副')
+      );
+      console.log(`🏮 Yamazoe events: ${yamazoeEvents?.length || 0}`);
+      if (yamazoeEvents && yamazoeEvents.length > 0) {
+        yamazoeEvents.slice(0, 3).forEach((event, index) => {
+          const title = event.summary || 'No title';
+          const startTime = event.start?.dateTime || event.start?.date || 'No time';
+          console.log(`     🏮 ${index + 1}. "${title}" at ${startTime}`);
+        });
+      }
+    }
+
     return res.data.items || [];
   } catch (error: unknown) {
-    console.error(`Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error');
+    console.error(`❌ Failed to fetch events for ${calendarId}:`, error instanceof Error ? error.message : 'Unknown error');
+    if (error instanceof Error) {
+      console.error(`   - Error details:`, error);
+    }
     return []; // Return empty array on error
   }
 };
@@ -79,6 +119,10 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   const timeMin = today.toISOString();
   const timeMax = new Date(now.getTime() + (61 * 24 * 60 * 60 * 1000)).toISOString(); // 61 days from now
 
+  console.log(`🕐 Data fetch range:`);
+  console.log(`  - timeMin: ${timeMin}`);
+  console.log(`  - timeMax: ${timeMax}`);
+
   // Fetch all calendars in parallel
   const [ishiharaWorkEvents, ishiharaPrivateEvents, ebisuEvents, hanzomonEvents] = await Promise.all([
     fetchEvents(calendar, CALENDAR_IDS.ishihara_work, timeMin, timeMax),
@@ -86,6 +130,12 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
     fetchEvents(calendar, CALENDAR_IDS.ebisu, timeMin, timeMax),
     fetchEvents(calendar, CALENDAR_IDS.hanzoomon, timeMin, timeMax),
   ]);
+
+  console.log(`📊 Calendar data fetched:`);
+  console.log(`  - Ishihara Work: ${ishiharaWorkEvents.length} events`);
+  console.log(`  - Ishihara Private: ${ishiharaPrivateEvents.length} events`);
+  console.log(`  - Ebisu: ${ebisuEvents.length} events`);
+  console.log(`  - Hanzoomon: ${hanzomonEvents.length} events`);
 
   // Helper to transform Google Calendar events to our Booking type
   const transformEvent = (event: calendar_v3.Schema$Event, source: 'work' | 'private' | 'ebisu' | 'hanzoomon' = 'work'): Booking => {
@@ -165,13 +215,11 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
   });
   
   const ishiharaBookings = [
-    ...ishiharaWorkFiltered.map(event => transformEvent(event, 'work')), 
+    ...ishiharaWorkFiltered.map(event => transformEvent(event, 'work')),
     ...ishiharaPrivateFiltered.map(event => transformEvent(event, 'private'))
   ];
-  const ebisuBookings = ebisuEvents.map(event => transformEvent(event, 'ebisu'));
-  const hanzomonBookings = hanzomonEvents.map(event => transformEvent(event, 'hanzoomon'));
 
-  // Add store and room info based on the booking title
+  // 🚀 FIX: Add store info to Ishihara bookings BEFORE extracting store bookings
   ishiharaBookings.forEach(b => {
       if (b.title?.includes('(半)') || b.title?.includes('（半）') || b.title?.startsWith('半 ')) {
           b.store = 'hanzoomon';
@@ -180,20 +228,58 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
       }
   });
 
-  ebisuBookings.forEach(b => {
+  const ebisuBookings = ebisuEvents.map(event => transformEvent(event, 'ebisu'));
+  const hanzomonBookings = hanzomonEvents.map(event => transformEvent(event, 'hanzoomon'));
+
+  // 🚀 FIX: Extract store-specific bookings from Ishihara's calendar
+  const ishiharaEbisuBookings = ishiharaBookings
+    .filter(booking => booking.store === 'ebisu')
+    .map(booking => ({ ...booking, source: 'ebisu' as const }));
+
+  const ishiharaHanzomonBookings = ishiharaBookings
+    .filter(booking => booking.store === 'hanzoomon')
+    .map(booking => ({ ...booking, source: 'hanzoomon' as const }));
+
+  console.log(`🔧 Adding Ishihara store bookings:`);
+  console.log(`  - Adding ${ishiharaEbisuBookings.length} Ebisu bookings from Ishihara calendar`);
+  console.log(`  - Adding ${ishiharaHanzomonBookings.length} Hanzoomon bookings from Ishihara calendar`);
+
+  // Merge with existing store bookings (avoid duplicates by ID)
+  const allEbisuBookings = [...ebisuBookings];
+  ishiharaEbisuBookings.forEach(booking => {
+    if (!allEbisuBookings.find(existing => existing.id === booking.id)) {
+      allEbisuBookings.push(booking);
+    }
+  });
+
+  const allHanzomonBookings = [...hanzomonBookings];
+  ishiharaHanzomonBookings.forEach(booking => {
+    if (!allHanzomonBookings.find(existing => existing.id === booking.id)) {
+      allHanzomonBookings.push(booking);
+    }
+  });
+
+  // Store info is already added above, now just add room info
+
+  allEbisuBookings.forEach(b => {
       b.store = 'ebisu';
       if (b.title?.includes('A')) b.room = 'A';
       if (b.title?.includes('B')) b.room = 'B';
   });
 
-  hanzomonBookings.forEach(b => {
+  allHanzomonBookings.forEach(b => {
       b.store = 'hanzoomon';
   });
 
+  console.log(`📊 Final booking counts:`);
+  console.log(`  - Ishihara: ${ishiharaBookings.length} bookings`);
+  console.log(`  - Ebisu: ${allEbisuBookings.length} bookings (was ${ebisuBookings.length})`);
+  console.log(`  - Hanzoomon: ${allHanzomonBookings.length} bookings (was ${hanzomonBookings.length})`);
+
   return {
     ishihara: ishiharaBookings,
-    ebisu: ebisuBookings,
-    hanzoomon: hanzomonBookings,
+    ebisu: allEbisuBookings,
+    hanzoomon: allHanzomonBookings,
     lastUpdate: new Date().toISOString(),
   };
 };

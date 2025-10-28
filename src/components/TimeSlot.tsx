@@ -13,9 +13,10 @@ interface TimeSlotProps {
   onClick?: () => void;
   isSelected?: boolean;
   privateEventSettings?: Record<string, boolean>;
+  topformHoldSettings?: Record<string, boolean>;
 }
 
-const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore, isAdminMode, onClick, isSelected = false, privateEventSettings = {} }) => {
+const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore, isAdminMode, onClick, isSelected = false, privateEventSettings = {}, topformHoldSettings = {} }) => {
   const [hour, minute] = time.split(':').map(Number);
   const slotTime = new Date(date);
   slotTime.setHours(hour, minute, 0, 0);
@@ -26,7 +27,7 @@ const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore
     title: string;
   } = { className: '', title: '' };
 
-  const result = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings);
+  const result = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings, topformHoldSettings);
   
   if (isAdminMode) {
     // 管理者モード：詳細な状況表示

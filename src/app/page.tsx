@@ -6,6 +6,7 @@ import BookingCalendar from '../components/BookingCalendar';
 import StoreFilter from '../components/StoreFilter';
 import Spinner from '../components/Spinner';
 import PrivateEventManager from '../components/PrivateEventManager';
+import TOPFORMHoldManager from '../components/TOPFORMHoldManager';
 import { BookingData } from '../types/booking';
 
 export default function Home() {
@@ -275,8 +276,12 @@ export default function Home() {
 
       {/* プライベート予定管理（管理者モードのみ） */}
       {isAdminMode && bookingData && (
-        <div className="mb-6">
-          <PrivateEventManager 
+        <div className="mb-6 space-y-6">
+          <PrivateEventManager
+            bookingData={bookingData}
+            onRefresh={handleManualRefresh}
+          />
+          <TOPFORMHoldManager
             bookingData={bookingData}
             onRefresh={handleManualRefresh}
           />
