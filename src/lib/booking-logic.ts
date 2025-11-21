@@ -442,11 +442,34 @@ export const checkAvailability = (
     return { isAvailable: false, reason: 'unavailable_block' };
   }
 
-  // フィルタリングされたishihara予定（無視設定されたプライベート予定を除外）
+  // フィルタリングされたishihara予定
   const filteredIshiharaBookings = allBookings.ishihara.filter(booking => {
+    // 1. 無視設定されたプライベート予定は除外
     if (booking.source === 'private' && privateEventSettings[booking.id] === false) {
-      return false; // 無視設定されたプライベート予定は除外
+      return false;
     }
+
+    // 2. ブロック対象外の終日イベントを除外
+    // これを行わないと、単なるメモとしての終日イベントが「予約済み」として扱われ、
+    // isTrainerBusy判定ですべての枠が埋まってしまう
+    const bookingStart = new Date(booking.start);
+    const bookingEnd = new Date(booking.end);
+    // 終日イベント判定 (00:00 - 23:59)
+    const isAllDay = bookingStart.getHours() === 0 && bookingStart.getMinutes() === 0 &&
+      bookingEnd.getHours() === 23 && bookingEnd.getMinutes() === 59;
+
+    if (isAllDay) {
+      const title = booking.title || '';
+      // ブロック対象キーワード（これらが含まれる場合のみ予約不可とする）
+      const blockingKeywords = ['休日', '休み', 'OFF', 'off'];
+      const isBlocking = blockingKeywords.some(keyword => title.includes(keyword));
+
+      // キーワードを含まない終日イベントは、予約判定から除外する
+      if (!isBlocking) {
+        return false;
+      }
+    }
+
     return true;
   });
 
