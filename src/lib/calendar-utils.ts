@@ -173,46 +173,9 @@ export const getGoogleCalendarBookings = async (): Promise<BookingData> => {
     };
   };
 
-  // Combine work and private events for the trainer, but exclude customer events and non-business all-day events
-  const ishiharaWorkFiltered = ishiharaWorkEvents.filter(event => {
-    const title = event.summary || '';
-    // Include all work events (these are trainer's scheduled appointments)
-    // Do not exclude any events from work calendar
-    
-    // Exclude non-business all-day events (birthdays, personal events, etc.)
-    if (event.start?.date && event.end?.date) { // This is an all-day event
-      if (title.includes('誕生日') || 
-          title.includes('SQUARE') || 
-          title.includes('請求書') || 
-          title.includes('海外') || 
-          title.includes('hacomono') ||
-          title.includes('データ出力')) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
-  
-  const ishiharaPrivateFiltered = ishiharaPrivateEvents.filter(event => {
-    const title = event.summary || '';
-    // Include all private events (they are trainer's personal appointments)
-    // Do not exclude any events from private calendar
-    
-    // Exclude non-business all-day events
-    if (event.start?.date && event.end?.date) { // This is an all-day event
-      if (title.includes('誕生日') || 
-          title.includes('SQUARE') || 
-          title.includes('請求書') || 
-          title.includes('海外') || 
-          title.includes('hacomono') ||
-          title.includes('データ出力')) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
+  // Combine work and private events for the trainer
+  const ishiharaWorkFiltered = ishiharaWorkEvents;
+  const ishiharaPrivateFiltered = ishiharaPrivateEvents;
   
   const ishiharaBookings = [
     ...ishiharaWorkFiltered.map(event => transformEvent(event, 'work')),

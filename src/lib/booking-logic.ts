@@ -344,7 +344,17 @@ const hasAllDayEvent = (slotTime: Date, ishiharaBookings: Booking[]): boolean =>
     const isAllDay = bookingStart.getHours() === 0 && bookingStart.getMinutes() === 0 &&
                     bookingEnd.getHours() === 23 && bookingEnd.getMinutes() === 59;
     
-    return isAllDay && bookingStartDate === slotDate;
+    if (!isAllDay || bookingStartDate !== slotDate) {
+      return false;
+    }
+
+    // Only block if the title explicitly indicates unavailability
+    // If title is empty or doesn't contain keywords, don't block
+    const title = booking.title || '';
+    const blockingKeywords = ['休み', 'OFF', 'off', '休暇', '不可', 'NG', 'ng', '祝日'];
+    
+    // Check if title contains any blocking keyword
+    return blockingKeywords.some(keyword => title.includes(keyword));
   });
 };
 
