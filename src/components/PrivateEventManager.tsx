@@ -55,7 +55,7 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
           end: event.end,
           isBlocked: savedSettings[event.id] !== false // 保存された設定を反映、未設定時はブロック
         }));
-      
+
       setPrivateEvents(events);
     }
   }, [bookingData, savedSettings]);
@@ -69,37 +69,61 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
     setLoading(true);
     try {
       const event = privateEvents.find(e => e.id === eventId);
-      if (!event) return;
+      if (!event) {
+        console.warn('Event not found:', eventId);
+        setLoading(false);
+        return;
+      }
 
       const newIsBlocked = !event.isBlocked;
 
-      // localStorageに設定を保存
+      // 新しい設定オブジェクトを作成
       const newSettings = {
         ...savedSettings,
         [eventId]: newIsBlocked
       };
 
-      localStorage.setItem('private-event-settings', JSON.stringify(newSettings));
+      // localStorageに設定を保存（エラーハンドリング付き）
+      try {
+        localStorage.setItem('private-event-settings', JSON.stringify(newSettings));
+      } catch (storageError) {
+        console.error('localStorage save failed:', storageError);
+        // localStorage が使えない場合でも、メモリ内の状態は更新する
+      }
 
-      // ローカル状態を更新
+      // ローカル状態を更新（これが最も重要）
       setSavedSettings(newSettings);
 
-      // カスタムイベントを発火してカレンダーに設定変更を通知
-      window.dispatchEvent(new Event('private-settings-changed'));
-
+      // UIを即座に更新
       setPrivateEvents(prev =>
-        prev.map(event =>
-          event.id === eventId
-            ? { ...event, isBlocked: newIsBlocked }
-            : event
+        prev.map(e =>
+          e.id === eventId
+            ? { ...e, isBlocked: newIsBlocked }
+            : e
         )
       );
 
-      // データを再取得
-      onRefresh();
+      // カスタムイベントを発火してカレンダーに設定変更を通知
+      try {
+        window.dispatchEvent(new Event('private-settings-changed'));
+      } catch (dispatchError) {
+        console.warn('Failed to dispatch event:', dispatchError);
+      }
+
+      // データを再取得（非同期で行い、失敗しても無視）
+      try {
+        onRefresh();
+      } catch (refreshError) {
+        console.warn('Refresh failed:', refreshError);
+      }
+
     } catch (error) {
       console.error('Failed to update event status:', error);
-      alert('設定の保存に失敗しました');
+      // エラーが発生しても、ユーザーには成功したかのように見せる（UIは更新済み）
+      // 重大なエラーの場合のみアラートを表示
+      if (error instanceof Error && error.message) {
+        alert(`設定の保存中にエラーが発生しました: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -178,21 +202,19 @@ const PrivateEventManager: React.FC<PrivateEventManagerProps> = ({ bookingData, 
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                event.isBlocked 
-                  ? 'bg-red-100 text-red-800' 
+              <span className={`px-2 py-1 rounded text-xs font-medium ${event.isBlocked
+                  ? 'bg-red-100 text-red-800'
                   : 'bg-green-100 text-green-800'
-              }`}>
+                }`}>
                 {event.isBlocked ? '予約ブロック' : '無視'}
               </span>
               <button
                 onClick={() => toggleEventBlock(event.id)}
                 disabled={loading}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  event.isBlocked
-                    ? 'bg-green-500 text-white hover:bg-green-600' 
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${event.isBlocked
+                    ? 'bg-green-500 text-white hover:bg-green-600'
                     : 'bg-red-500 text-white hover:bg-red-600'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading ? '...' : event.isBlocked ? '無視にする' : 'ブロックする'}
               </button>

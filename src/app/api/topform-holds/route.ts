@@ -1,28 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
-const SETTINGS_FILE = path.join(process.cwd(), 'data', 'topform-hold-settings.json');
-
-// 設定ファイルが存在することを確認し、なければ作成
-const ensureSettingsFile = () => {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  if (!fs.existsSync(SETTINGS_FILE)) {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ settings: {} }));
-  }
-};
+const SETTINGS_KEY = 'topform-hold-settings';
 
 // GET: 設定を取得
 export async function GET() {
   try {
-    ensureSettingsFile();
-    const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-    const settings = JSON.parse(data);
-    
-    return NextResponse.json(settings);
+    const settings = await kv.get(SETTINGS_KEY);
+    return NextResponse.json(settings || { settings: {} });
   } catch (error) {
     console.error('Failed to read TOPFORM hold settings:', error);
     return NextResponse.json({ settings: {} }, { status: 200 });
@@ -33,31 +18,42 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const { eventId, isIgnored } = await request.json();
-    
+
     if (!eventId || typeof isIgnored !== 'boolean') {
       return NextResponse.json(
-        { error: 'eventId and isIgnored are required' }, 
+        { error: 'eventId and isIgnored are required' },
         { status: 400 }
       );
     }
 
-    ensureSettingsFile();
-    
-    // 現在の設定を読み込み
-    const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-    const currentSettings = JSON.parse(data);
-    
+    // 現在の設定を読み込み (存在しない場合は空のオブジェクト)
+    const currentSettings: { settings: Record<string, boolean> } = await kv.get(SETTINGS_KEY) || { settings: {} };
+
     // 設定を更新
     currentSettings.settings[eventId] = isIgnored;
-    
-    // ファイルに保存
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings, null, 2));
-    
+
+    // KVに保存
+    await kv.set(SETTINGS_KEY, currentSettings);
+
     return NextResponse.json({ success: true, settings: currentSettings.settings });
   } catch (error) {
     console.error('Failed to save TOPFORM hold setting:', error);
     return NextResponse.json(
-      { error: 'Failed to save setting' }, 
+      { error: 'Failed to save setting' },
+      { status: 500 }
+    );
+  }
+}
+
+// 設定をリセット（開発用）
+export async function DELETE() {
+  try {
+    await kv.del(SETTINGS_KEY);
+    return NextResponse.json({ success: true, message: 'All settings cleared' });
+  } catch (error) {
+    console.error('Failed to clear TOPFORM hold settings:', error);
+    return NextResponse.json(
+      { error: 'Failed to clear settings' },
       { status: 500 }
     );
   }
