@@ -339,7 +339,7 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
         {/* グリッド本体 */}
         <div className="space-y-12">
           {Object.entries(groupedDays).map(([monthLabel, monthDays]) => (
-            <div key={monthLabel} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div key={monthLabel} className="animate-in fade-in duration-500">
               <h3 className="text-xl font-bold text-slate-800 mb-4 ml-1 flex items-center gap-2">
                 <span className="w-1.5 h-6 bg-blue-500 rounded-full shadow-sm shadow-blue-200"></span>
                 {monthLabel}
