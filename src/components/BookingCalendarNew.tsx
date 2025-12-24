@@ -337,7 +337,7 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
                 {monthLabel}
               </h3>
 
-              <div className="overflow-auto relative max-h-[75vh] custom-scrollbar rounded-2xl bg-white shadow-sm border border-slate-100">
+              <div className="overflow-auto relative max-h-[85vh] custom-scrollbar rounded-2xl bg-white shadow-sm border border-slate-100">
                 <div className={`grid text-sm min-w-max pb-4`} style={{
                   gridTemplateColumns: `70px repeat(${monthDays.length}, minmax(55px, 1fr))`,
                   gap: '1px' // グリッドの隙間を作る
