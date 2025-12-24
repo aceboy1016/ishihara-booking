@@ -365,10 +365,10 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
                       dayNameClass = 'text-blue-100';
                       dateNumClass = 'text-white';
                     } else if (dayOfWeek === 0 || isHol) {
-                      headerClass = 'bg-rose-50/50 text-rose-600 rounded-t-xl';
+                      headerClass = 'bg-rose-50 text-rose-600 rounded-t-xl';
                       dayNameClass = 'text-rose-600';
                     } else if (dayOfWeek === 6) {
-                      headerClass = 'bg-blue-50/50 text-blue-600 rounded-t-xl';
+                      headerClass = 'bg-blue-50 text-blue-600 rounded-t-xl';
                       dayNameClass = 'text-blue-600';
                     }
 

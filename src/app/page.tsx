@@ -270,7 +270,9 @@ export default function Home() {
         </div>
       )}
 
-
+      <footer className="text-center text-slate-400 mt-12 mb-8 text-sm">
+        <p>Last Sync: {bookingData ? new Date(bookingData.lastUpdate).toLocaleString('ja-JP') : 'N/A'}</p>
+      </footer>
     </main>
   );
 }
