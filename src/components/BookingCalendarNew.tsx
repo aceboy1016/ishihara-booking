@@ -225,7 +225,7 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
     }, {} as Record<string, Date[]>);
 
   return (
-    <div className="space-y-4 font-sans text-gray-600 bg-slate-50/50 p-4 md:p-8 rounded-[3rem]">
+    <div className="space-y-4 font-sans text-gray-600 bg-slate-50/50 p-1 md:p-8 rounded-2xl md:rounded-[3rem]">
       {/* 予約リクエスト欄（閲覧者モードのみ） */}
       {!isAdminMode && (
         <div className="bg-white/80 backdrop-blur rounded-[2rem] shadow-sm p-6 border border-white">
@@ -243,7 +243,7 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
         </div>
       )}
 
-      <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white">
+      <div className="bg-white p-2 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white">
         {/* カレンダーヘッダー */}
         <div className="mb-4 flex flex-col md:flex-row items-center justify-between gap-6">
 

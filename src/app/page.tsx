@@ -153,7 +153,7 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8 bg-slate-50 min-h-screen">
+    <main className="container mx-auto px-1 md:px-4 py-4 md:py-8 bg-slate-50 min-h-screen">
       <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-slate-800 mb-4 sm:mb-0">
           予約早見表（石原）
