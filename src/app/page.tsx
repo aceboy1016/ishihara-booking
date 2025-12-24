@@ -238,6 +238,35 @@ export default function Home() {
                 {isRefreshing ? 'Updating...' : 'Refresh Data'}
               </button>
             </div>
+
+            {/* データデバッグ (Ishihara Calendar) */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 mt-2">
+              <details className="bg-slate-50 p-4 rounded-xl border border-slate-100 group">
+                <summary className="font-bold text-slate-700 cursor-pointer list-none flex items-center gap-2">
+                  <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">DEBUG</span>
+                  カレンダーデータ確認
+                  <svg className="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="mt-4 max-h-96 overflow-auto text-xs font-mono bg-white p-4 rounded-lg border border-slate-200 shadow-inner">
+                  <p className="mb-2 text-slate-400">※ 直近の石原カレンダー予定 (Private/Work)</p>
+                  {bookingData?.ishihara
+                    .filter(b => new Date(b.start) >= new Date()) // 未来のみ
+                    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+                    .slice(0, 50) // 最大50件
+                    .map(b => (
+                      <div key={b.id} className="border-b border-gray-100 py-2 hover:bg-slate-50">
+                        <span className="text-blue-600 font-bold">[{new Date(b.start).toLocaleDateString()} {new Date(b.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(b.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
+                        <span className="ml-2 font-bold text-slate-700">{b.title || '(No Title)'}</span>
+                        <span className="ml-2 text-gray-400 text-[10px] bg-gray-100 px-1 rounded">{b.source}</span>
+                      </div>
+                    ))
+                  }
+                  {(!bookingData?.ishihara || bookingData.ishihara.length === 0) && (
+                    <div className="text-gray-400 italic">No data available</div>
+                  )}
+                </div>
+              </details>
+            </div>
           </div>
         </div>
       )}

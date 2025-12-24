@@ -348,19 +348,17 @@ const hasAllDayEvent = (slotTime: Date, ishiharaBookings: Booking[]): boolean =>
     const bookingStartDate = bookingStart.toISOString().split('T')[0];
 
     // Check if this is an all-day event that covers the slot date
-    // All-day events typically start at 00:00 and end at 23:59 on the same day
+    // Relaxed check: Starts at 00:00 and ends >= 23:00 on the same day
     const isAllDay = bookingStart.getHours() === 0 && bookingStart.getMinutes() === 0 &&
-      bookingEnd.getHours() === 23 && bookingEnd.getMinutes() === 59;
+      bookingEnd.getHours() >= 23;
 
     if (!isAllDay || bookingStartDate !== slotDate) {
       return false;
     }
 
     // Only block if the title explicitly indicates unavailability
-    // User requested to only block for "休日" (and likely synonyms like "休み", "OFF")
-    // Removed broad keywords like "不可", "NG", "祝日" to prevent false positives
     const title = booking.title || '';
-    const blockingKeywords = ['休日', '休み', 'OFF', 'off'];
+    const blockingKeywords = ['休日', '休み', 'OFF', 'off', '祝日'];
 
     // Check if title contains any blocking keyword
     return blockingKeywords.some(keyword => title.includes(keyword));
@@ -469,14 +467,14 @@ export const checkAvailability = (
     // isTrainerBusy判定ですべての枠が埋まってしまう
     const bookingStart = new Date(booking.start);
     const bookingEnd = new Date(booking.end);
-    // 終日イベント判定 (00:00 - 23:59)
+    // 終日イベント判定 (00:00 - 23:00+)
     const isAllDay = bookingStart.getHours() === 0 && bookingStart.getMinutes() === 0 &&
-      bookingEnd.getHours() === 23 && bookingEnd.getMinutes() === 59;
+      bookingEnd.getHours() >= 23;
 
     if (isAllDay) {
       const title = booking.title || '';
       // ブロック対象キーワード（これらが含まれる場合のみ予約不可とする）
-      const blockingKeywords = ['休日', '休み', 'OFF', 'off'];
+      const blockingKeywords = ['休日', '休み', 'OFF', 'off', '祝日'];
       const isBlocking = blockingKeywords.some(keyword => title.includes(keyword));
 
       // キーワードを含まない終日イベントは、予約判定から除外する
