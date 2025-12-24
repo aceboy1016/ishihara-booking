@@ -293,7 +293,7 @@ export default function Home() {
           isAdminMode={isAdminMode}
         />
       ) : (
-        <div className="flex flex-col items-center justify-start pt-32 min-h-[50vh] gap-4">
+        <div className="space-y-4 font-sans text-gray-600 bg-slate-50/50 p-6 md:p-8 rounded-2xl md:rounded-[3rem] min-h-[60vh] flex flex-col items-center justify-center border border-slate-100">
           <Spinner />
           <p className="text-slate-400 animate-pulse font-medium">Loading Schedule...</p>
         </div>
