@@ -125,8 +125,16 @@ const BookingCalendarNew: React.FC<BookingCalendarProps> = ({ selectedStore, cur
       '2025-10-13', '2025-11-3', '2025-11-23', '2025-11-24'
     ];
 
+    // 2026年の主要祝日
+    const holidays2026 = [
+      '2026-1-1', '2026-1-12', '2026-2-11', '2026-2-23', '2026-2-24',
+      '2026-3-20', '2026-4-29', '2026-5-3', '2026-5-4', '2026-5-5', '2026-5-6',
+      '2026-7-20', '2026-8-11', '2026-9-21', '2026-9-22', '2026-9-23',
+      '2026-10-12', '2026-11-3', '2026-11-23'
+    ];
+
     const dateStr = `${year}-${month}-${day}`;
-    return holidays2024.includes(dateStr) || holidays2025.includes(dateStr);
+    return holidays2024.includes(dateStr) || holidays2025.includes(dateStr) || holidays2026.includes(dateStr);
   };
 
   const goToPreviousMonth = () => {
