@@ -59,8 +59,16 @@ const isHoliday = (date: Date): boolean => {
     '2025-10-13', '2025-11-3', '2025-11-23', '2025-11-24'
   ];
 
+  // 2026年の主要祝日
+  const holidays2026 = [
+    '2026-1-1', '2026-1-12', '2026-2-11', '2026-2-23', '2026-2-24',
+    '2026-3-20', '2026-4-29', '2026-5-3', '2026-5-4', '2026-5-5', '2026-5-6',
+    '2026-7-20', '2026-8-11', '2026-9-21', '2026-9-22', '2026-9-23',
+    '2026-10-12', '2026-11-3', '2026-11-23'
+  ];
+
   const dateStr = `${year}-${month}-${day}`;
-  return holidays2024.includes(dateStr) || holidays2025.includes(dateStr);
+  return holidays2024.includes(dateStr) || holidays2025.includes(dateStr) || holidays2026.includes(dateStr);
 };
 
 
@@ -403,6 +411,13 @@ export const checkAvailability = (
   const twoMonthsBeforeDate = new Date(twoMonthsBefore.getFullYear(), twoMonthsBefore.getMonth(), twoMonthsBefore.getDate());
 
   if (todayDateOnly < twoMonthsBeforeDate) {
+    return { isAvailable: false, reason: 'unavailable_block' };
+  }
+
+  // Check for specific forced closed days
+  const slotDateStr = `${slotTime.getFullYear()}-${slotTime.getMonth() + 1}-${slotTime.getDate()}`;
+  const forcedClosedDays = ['2026-2-24'];
+  if (forcedClosedDays.includes(slotDateStr)) {
     return { isAvailable: false, reason: 'unavailable_block' };
   }
 
