@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import LoginForm from '../components/LoginForm';
-import BookingCalendarNew from '../components/BookingCalendarNew';
-import StoreFilter from '../components/StoreFilter';
-import Spinner from '../components/Spinner';
-import PrivateEventManager from '../components/PrivateEventManager';
-import TOPFORMHoldManager from '../components/TOPFORMHoldManager';
-import { BookingData } from '../types/booking';
+import LoginForm from '../../components/LoginForm';
+import BookingCalendarNew from '../../components/BookingCalendarNew';
+import StoreFilter from '../../components/StoreFilter';
+import Spinner from '../../components/Spinner';
+import PrivateEventManager from '../../components/PrivateEventManager';
+import TOPFORMHoldManager from '../../components/TOPFORMHoldManager';
+import { BookingData } from '../../types/booking';
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -8,8 +8,8 @@ interface BookingRequestProps {
   onRemoveSlot?: (index: number) => void;
 }
 
-const BookingRequest: React.FC<BookingRequestProps> = ({ 
-  selectedSlots, 
+const BookingRequest: React.FC<BookingRequestProps> = ({
+  selectedSlots,
   onClearAll,
   onRemoveSlot
 }) => {
@@ -44,7 +44,7 @@ const BookingRequest: React.FC<BookingRequestProps> = ({
 
   const generateMessage = () => {
     if (sortedSlots.length === 0) return '';
-    
+
     if (sortedSlots.length === 1) {
       const slot = sortedSlots[0];
       return `【予約希望】
@@ -55,7 +55,7 @@ ${formatDate(slot.date)} ${formatTime(slot.time)} @${getStoreDisplayName(slot.st
       const slotList = sortedSlots
         .map((slot) => `・${formatDate(slot.date)} ${formatTime(slot.time)} @${getStoreDisplayName(slot.store)}`)
         .join('\n');
-      
+
       return `【予約希望】
 ${slotList}
 
@@ -79,16 +79,16 @@ ${slotList}
 
   if (selectedSlots.length === 0) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
           </div>
-          <h3 className="font-semibold text-blue-900">予約リクエスト</h3>
+          <h3 className="font-semibold text-blue-900 text-sm">予約リクエスト</h3>
         </div>
-        <p className="text-sm text-blue-700">
-          カレンダーから希望の日時を選択してください。<br/>
-          複数の候補日時を選択することも可能です。<br/>
+        <p className="text-xs font-medium text-blue-900 leading-relaxed">
+          カレンダーから希望の日時を選択してください。<br />
+          複数の候補日時を選択することも可能です。<br />
           選択後、LINEで簡単に予約リクエストを送信できます。
         </p>
       </div>
@@ -98,17 +98,17 @@ ${slotList}
   const message = generateMessage();
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-          <div className="w-2 h-2 bg-white rounded-full"></div>
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
         </div>
-        <h3 className="font-semibold text-blue-900">予約リクエスト</h3>
+        <h3 className="font-semibold text-blue-900 text-sm">予約リクエスト</h3>
       </div>
 
-      <div className="bg-white rounded-lg p-3 mb-3 border">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-medium text-gray-800">
+      <div className="bg-white rounded-lg p-2 mb-2 border">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="text-xs font-bold text-gray-800">
             選択した日時（{selectedSlots.length}件）：
           </div>
           {onClearAll && selectedSlots.length > 0 && (
@@ -123,25 +123,25 @@ ${slotList}
         <div className="space-y-2 max-h-32 overflow-y-auto">
           {sortedSlots.map((slot, sortedIndex) => {
             // 元の配列でのインデックスを見つける
-            const originalIndex = selectedSlots.findIndex(s => 
-              s.date.getTime() === slot.date.getTime() && 
-              s.time === slot.time && 
+            const originalIndex = selectedSlots.findIndex(s =>
+              s.date.getTime() === slot.date.getTime() &&
+              s.time === slot.time &&
               s.store === slot.store
             );
-            const selectionOrder = selectedSlots.findIndex(s => 
-              s.date.getTime() === slot.date.getTime() && 
-              s.time === slot.time && 
+            const selectionOrder = selectedSlots.findIndex(s =>
+              s.date.getTime() === slot.date.getTime() &&
+              s.time === slot.time &&
               s.store === slot.store
             ) + 1;
-            
+
             return (
-              <div key={sortedIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div key={sortedIndex} className="flex items-center justify-between p-1.5 bg-slate-100 rounded border border-slate-200">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  <div className="w-5 h-5 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
                     {selectionOrder}
                   </div>
                   <div>
-                    <div className="font-medium text-blue-900">
+                    <div className="font-bold text-blue-900 text-xs">
                       {formatDate(slot.date)} {formatTime(slot.time)} @{getStoreDisplayName(slot.store)}
                     </div>
                   </div>
@@ -161,9 +161,9 @@ ${slotList}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg p-3 mb-4 border">
-        <div className="text-sm font-medium text-gray-800 mb-2">LINEメッセージ内容：</div>
-        <div className="text-sm text-gray-700 whitespace-pre-line bg-gray-50 p-2 rounded border">
+      <div className="bg-white rounded-lg p-2 mb-3 border">
+        <div className="text-xs font-bold text-gray-800 mb-1">LINEメッセージ内容：</div>
+        <div className="text-xs font-medium text-slate-900 whitespace-pre-line bg-slate-50 p-2 rounded border border-slate-200 leading-relaxed">
           {message}
         </div>
       </div>
@@ -171,11 +171,9 @@ ${slotList}
       <div className="flex justify-center">
         <button
           onClick={handleCopy}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            copied 
-              ? 'bg-green-500 text-white' 
+          className={`px-4 py-1.5 rounded-lg font-bold text-xs transition-colors ${copied ? 'bg-emerald-600 text-white'
               : 'bg-blue-500 text-white hover:bg-blue-600'
-          }`}
+            }`}
         >
           {copied ? '✓ コピー完了' : '□ コピー'}
         </button>

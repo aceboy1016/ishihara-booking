@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約サイト（Luxury） - 2025年12月</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+JP:wght@300;400;600&family=Lato:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .font-eng {
+            font-family: 'Cinzel', serif;
+        }
+
+        .font-num {
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* ダークモード用スクロールバー */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+            border: 1px solid #111;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #B38728;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 70px repeat(31, minmax(55px, 1fr));
+        }
+
+        /* 高級感のあるゴールドグラデーション */
+        .text-gold {
+            background: linear-gradient(to bottom, #cfc09f 0%, #ffecb3 20%, #aa8949 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-gold {
+            background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+        }
+
+        .border-gold {
+            border-color: #aa8949;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a' },
+                        gold: { 400: '#d4af37', 500: '#aa8949', 600: '#8a6e3e' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-dark-900 text-gray-300 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-[95vw] mx-auto space-y-6">
+
+        <!-- ヘッダー -->
+        <div class="flex justify-between items-center bg-dark-800 p-4 rounded-sm border border-white/5 shadow-2xl">
+            <h1 class="font-eng text-xl tracking-widest text-gold flex items-center gap-3">
+                ISHIHARA BOOKING <span
+                    class="text-[10px] bg-dark-700 text-gray-400 px-2 py-1 rounded-sm border border-white/10 font-sans tracking-normal">ADMIN
+                    MODE</span>
+            </h1>
+            <div class="flex gap-3">
+                <button
+                    class="px-5 py-2 bg-transparent text-gold border border-gold/30 hover:border-gold/80 hover:bg-gold/10 transition-all rounded-sm text-xs tracking-widest font-eng">EBISU</button>
+                <button
+                    class="px-5 py-2 bg-gold text-dark-900 rounded-sm text-xs font-bold tracking-widest hover:opacity-90 transition-all font-eng shadow-[0_0_15px_rgba(170,137,73,0.4)]">NEW
+                    BOOKING</button>
+            </div>
+        </div>
+
+        <!-- カレンダー -->
+        <div class="bg-dark-800 p-6 rounded-sm shadow-2xl border border-white/5 relative overflow-hidden">
+            <!-- 背景装飾 -->
+            <div class="absolute top-0 right-0 w-96 h-96 bg-gold-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- カレンダーヘッダー -->
+            <div class="mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+                <div class="flex items-center gap-6">
+                    <button class="text-gray-500 hover:text-gold-400 transition"><svg class="w-6 h-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
+                        </svg></button>
+                    <div class="font-eng text-2xl text-white tracking-[0.2em] text-center">
+                        DECEMBER <span class="text-gold-500 text-lg ml-2">2025</span>
+                    </div>
+                    <button class="text-gray-500 hover:text-gold-400 transition"><svg class="w-6 h-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
+                        </svg></button>
+                </div>
+                <button
+                    class="px-6 py-2 border border-white/10 text-gray-400 hover:text-white hover:border-white/30 transition text-xs tracking-widest uppercase font-eng">Today</button>
+            </div>
+
+            <!-- 凡例 -->
+            <div
+                class="mb-8 flex flex-wrap gap-8 text-[10px] tracking-wider text-gray-400 uppercase font-eng border-b border-white/5 pb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rotate-45 bg-gold-400 shadow-[0_0_10px_rgba(212,175,55,0.5)]"></div> AVAILABLE
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-gray-600"></div> BOOKED
+                </div>
+                <div class="flex items-center gap-2"><span class="text-blue-400 text-xs">◆</span> TRAVEL</div>
+                <div class="flex items-center gap-2"><span class="text-red-900 font-bold">●</span> FULL</div>
+            </div>
+
+            <!-- グリッド本体 -->
+            <div class="overflow-auto relative max-h-[75vh] custom-scrollbar border border-white/5 bg-dark-900/50">
+                <div class="grid-container text-sm min-w-max">
+
+                    <!-- Time Column Header -->
+                    <div
+                        class="sticky top-0 left-0 z-30 py-4 px-2 text-[10px] tracking-widest text-gold-600 bg-dark-800 border-b border-r border-white/5 flex items-end justify-center font-eng">
+                        TIME</div>
+
+                    <!-- Day Headers -->
+                    <script>
+                        const daysEn = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+                        for (let i = 1; i <= 31; i++) {
+                            const date = new Date(2025, 11, i);
+                            const dayOfWeek = (date.getDay() + 6) % 7;
+                            const dayName = daysEn[dayOfWeek];
+
+                            let headerClass = 'bg-dark-800 text-gray-400';
+                            let dayNameClass = 'text-gray-600';
+
+                            // Weekend styling (subtle)
+                            if (dayOfWeek === 5) { // Sat
+                                dayNameClass = 'text-blue-900';
+                            } else if (dayOfWeek === 6) { // Sun
+                                dayNameClass = 'text-red-900';
+                            }
+                            // Highlight Current Day (e.g., 1st)
+                            let dateClass = 'text-gray-200';
+                            if (i === 1) dateClass = 'text-gold-400 font-bold';
+
+                            document.write(`
+                                <div class="sticky top-0 z-20 py-4 px-1 text-center border-b border-white/5 whitespace-nowrap ${headerClass}">
+                                    <div class="text-[9px] tracking-widest mb-1 ${dayNameClass} font-eng">${dayName}</div>
+                                    <div class="text-lg ${dateClass} font-eng">${i}</div>
+                                </div>
+                            `);
+                        }
+                    </script>
+
+                    <!-- Time Rows -->
+                    <script>
+                        const times = [
+                            "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+                            "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+                            "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+                        ];
+
+                        times.forEach(time => {
+                            document.write(`
+                                <div class="sticky left-0 z-20 py-3 px-1 text-[10px] tracking-widest text-gray-600 bg-dark-800 border-b border-r border-white/5 flex items-center justify-center font-num">${time}</div>
+                            `);
+
+                            for (let i = 1; i <= 31; i++) {
+                                const date = new Date(2025, 11, i);
+                                const dayOfWeek = (date.getDay() + 6) % 7;
+                                const hour = parseInt(time.split(':')[0]);
+
+                                let content = '';
+                                let containerClass = 'bg-transparent border-b border-r border-white/5';
+                                const rand = Math.random();
+
+                                /* Visual Logic for Luxury Theme */
+                                if (dayOfWeek === 2 && hour < 14) {
+                                    // Busy: Golden tint, subtle
+                                    content = '<div class="w-1.5 h-1.5 rounded-full bg-gold-600/50"></div>';
+                                    containerClass = 'bg-gold-900/10 border-b border-r border-white/5';
+                                } else if (i === 15) {
+                                    // Full: Red tint
+                                    containerClass = 'bg-red-900/10 border-b border-r border-white/5';
+                                    content = '<span class="text-[8px] tracking-widest text-red-900 font-eng">FULL</span>';
+                                } else if (i === 2 && hour === 14) {
+                                    // Travel
+                                    content = '<span class="text-blue-900 text-[10px]">◆</span>';
+                                } else if (hour < 10 || hour > 20) {
+                                    containerClass = 'bg-[#050505] border-b border-r border-white/5 cursor-not-allowed';
+                                } else if (rand > 0.8) {
+                                    // Available: Diamond shape, glowing gold
+                                    content = `
+                                        <div class="group relative flex items-center justify-center cursor-pointer">
+                                            <div class="w-2.5 h-2.5 rotate-45 bg-gradient-to-br from-[#fcf6ba] to-[#b38728] shadow-[0_0_10px_rgba(212,175,55,0.6)] group-hover:scale-125 transition-transform duration-300"></div>
+                                        </div>
+                                    `;
+                                    containerClass = 'bg-transparent border-b border-r border-white/5 hover:bg-gold-900/20 transition-colors';
+                                } else if (rand > 0.6) {
+                                    // Booked internal
+                                    content = '<div class="w-1 h-1 rounded-full bg-gray-700"></div>';
+                                }
+
+                                document.write(`
+                                    <div class="relative h-12 flex items-center justify-center transition-colors duration-200 ${containerClass}">
+                                        ${content}
+                                    </div>
+                                `);
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
