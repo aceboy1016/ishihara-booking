@@ -14,101 +14,117 @@ interface TimeSlotProps {
   isSelected?: boolean;
   privateEventSettings?: Record<string, boolean>;
   topformHoldSettings?: Record<string, boolean>;
+  selectedSlot?: { date: Date; time: string } | null;
 }
 
-const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore, isAdminMode, onClick, isSelected = false, privateEventSettings = {}, topformHoldSettings = {} }) => {
+const TimeSlot: React.FC<TimeSlotProps> = ({ date, time, bookings, selectedStore, isAdminMode, onClick, isSelected = false, privateEventSettings = {}, topformHoldSettings = {}, selectedSlot = null }) => {
   const [hour, minute] = time.split(':').map(Number);
   const slotTime = new Date(date);
   slotTime.setHours(hour, minute, 0, 0);
 
-
-  let status: {
-    className: string;
-    title: string;
-  } = { className: '', title: '' };
-
   const result = checkAvailability(slotTime, selectedStore, bookings, privateEventSettings, topformHoldSettings);
-  
+
+  // Determine the visual state based on availability and mode
+  let content = null;
+  let containerClass = "bg-white border-b border-r border-gray-100";
+
   if (isAdminMode) {
-    // 管理者モード：詳細な状況表示
+    // === Admin Mode Visualization ===
     if (result.isAvailable) {
-      status = { className: 'bg-emerald-400', title: `予約可能です` };
+      // Available
+      content = selectedSlot?.date.getTime() === slotTime.getTime() && selectedSlot?.time === time
+        ? <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg transform scale-110 transition-transform"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></div>
+        : <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-sm shadow-emerald-200"></div>;
     } else {
+      // Not Available (Admin)
+      let indicatorColor = "bg-gray-300";
+      let icon = null;
+
       switch (result.reason) {
         case 'trainer_busy':
-          status = { className: 'bg-amber-400', title: 'トレーナーが予約済みです' };
+          indicatorColor = "bg-amber-400"; // Busy
+          icon = <span className="text-[10px] font-bold text-amber-600">BUSY</span>;
+          containerClass = "bg-amber-50/50 border-b border-r border-amber-100";
           break;
         case 'travel_conflict':
-          status = { className: 'bg-blue-400', title: '店舗間の移動時間が必要です' };
+          indicatorColor = "bg-blue-400"; // Travel
+          icon = <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>;
           break;
         case 'store_full':
-          status = { className: 'bg-rose-500', title: '満室です' };
+          indicatorColor = "bg-rose-500"; // Full
+          icon = <span className="text-[9px] font-bold text-rose-500 leading-tight">FULL</span>;
+          containerClass = "bg-rose-50/50 border-b border-r border-rose-100";
           break;
         case 'unavailable_block':
-          status = { className: 'bg-gray-600', title: '予約不可時間帯です' };
+          indicatorColor = "bg-gray-500";
+          icon = <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>;
+          containerClass = "bg-gray-50 border-b border-r border-gray-100";
           break;
-        default:
-          status = { className: 'bg-slate-300', title: '営業時間外です' };
+        default: // outside_hours
+          indicatorColor = "bg-slate-200";
+          containerClass = "bg-gray-50/50 border-b border-r border-gray-100";
+          break;
       }
+
+      // If specific icon is set, use it, otherwise just a dot
+      content = icon ? icon : <div className={`w-2 h-2 rounded-full ${indicatorColor}`}></div>;
     }
+
   } else {
-    // 閲覧者モード：シンプルに予約可能/不可のみ（デバッグ用に理由も表示）
+    // === Guest Mode Visualization (Simpler) ===
     if (result.isAvailable) {
-      status = { className: 'bg-emerald-400', title: '予約可能' };
+      if (isSelected) {
+        // Selected State
+        content = (
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md transform scale-110 transition-all duration-200">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          </div>
+        );
+        containerClass = "bg-blue-50/30 border-b border-r border-blue-100";
+      } else {
+        // Available State
+        content = (
+          <div className="w-8 h-8 rounded-full border-2 border-blue-400 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:border-transparent hover:shadow-md transition-all duration-200 group">
+            <div className="w-2 h-2 rounded-full bg-current group-hover:scale-0 transition-transform"></div>
+            {/* Simple Plus or Check on hover could go here, but a circle is clean */}
+          </div>
+        );
+      }
     } else {
-      const reasonText = result.reason === 'trainer_busy' ? 'トレーナー予約済み' :
-                        result.reason === 'travel_conflict' ? '移動時間' :
-                        result.reason === 'store_full' ? '満室' :
-                        result.reason === 'unavailable_block' ? '予約不可' :
-                        '営業時間外';
-      status = { className: 'bg-slate-400', title: `予約不可 - ${reasonText}` };
+      // Unavailable (Guest)
+      // Minimalist dot or dash
+      if (result.reason === 'outside_hours') {
+        content = null; // Blank for outside hours to reduce noise? Or a dash?
+        containerClass = "bg-white border-b border-r border-gray-100"; // Clean look for empty times
+      } else {
+        content = <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>;
+        containerClass = "bg-gray-50/30 border-b border-r border-gray-100 cursor-not-allowed";
+      }
     }
   }
 
-  const getSymbol = () => {
-    if (isAdminMode) {
-      // 管理者モードでは詳細な記号
-      if (result.isAvailable) {
-        return '○';
-      } else {
-        switch (result.reason) {
-          case 'trainer_busy':
-            return '■';
-          case 'travel_conflict':
-            return '▲';
-          case 'store_full':
-            return '●';
-          case 'unavailable_block':
-            return '▼';
-          default:
-            return '-';
-        }
-      }
-    } else {
-      // 閲覧者モードではシンプルに○-のみ
-      return result.isAvailable ? '○' : '-';
-    }
-  };
+  // ツールチップ用のテキスト生成
+  let titleText = '';
+  if (result.isAvailable) {
+    titleText = '予約可能';
+  } else {
+    const reasonText = result.reason === 'trainer_busy' ? 'トレーナー予約済み' :
+      result.reason === 'travel_conflict' ? '移動時間' :
+        result.reason === 'store_full' ? '満室' :
+          result.reason === 'unavailable_block' ? '予約不可' :
+            '営業時間外';
+    titleText = `予約不可 - ${reasonText}`;
+  }
+
 
   return (
     <div
-      className={`h-10 transition-colors duration-200 ${
-        isSelected && !isAdminMode
-          ? 'bg-blue-600 border-2 border-blue-800' 
-          : `${status.className} border-b border-r`
-      } ${
-        (isAdminMode || result.isAvailable) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
-      } flex items-center justify-center relative z-10`} 
-      title={status.title}
+      className={`relative h-12 flex items-center justify-center transition-colors duration-200 ${containerClass} ${(isAdminMode || result.isAvailable) ? 'cursor-pointer' : ''
+        }`}
+      title={titleText}
       onClick={onClick}
     >
-      <span className={`text-lg font-bold ${
-        isSelected
-          ? 'text-white drop-shadow-sm'
-          : 'text-white drop-shadow-md'
-      }`}>
-        {getSymbol()}
-      </span>
+      {content}
     </div>
   );
 };
